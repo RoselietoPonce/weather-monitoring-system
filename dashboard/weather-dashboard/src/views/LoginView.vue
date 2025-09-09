@@ -1,5 +1,95 @@
 <script setup>
+  import { ref } from 'vue';
   import { Icon } from '@iconify/vue';
+  import { auth } from '@/firebase.js';
+  import {
+    signInWithEmailAndPassword,
+    sendPasswordResetEmail,
+    GoogleAuthProvider,
+    signInWithPopup,
+  } from "firebase/auth";
+  import { useRouter } from 'vue-router';
+
+  // State for the form inputs
+  const email = ref('');
+  const password = ref('');
+  const errorMessage = ref('');
+  const successMessage = ref('');
+  const router = useRouter();
+
+  const signIn = () => {
+    signInWithEmailAndPassword(auth, email.value, password.value)
+      .then((userCredential) => {
+        console.log('Successfully signed in:', userCredential.user);
+        errorMessage.value = '';
+        successMessage.value = '';
+        router.push('/dashboard');
+      })
+      .catch((error) => {
+        console.error('Login Error:', error.message);
+        successMessage.value = '';
+        switch (error.code) {
+          case 'auth/invalid-email':
+            errorMessage.value = 'Please enter a valid email address.';
+            break;
+          case 'auth/user-not-found':
+            errorMessage.value = 'No account found with this email.';
+            break;
+          case 'auth/wrong-password':
+            errorMessage.value = 'Incorrect password. Please try again.';
+            break;
+          default:
+            errorMessage.value = 'An unexpected error occurred. Please try again.';
+            break;
+        }
+      });
+  };
+
+  // Function to handle password reset
+  const handlePasswordReset = () => {
+    if (!email.value) {
+      errorMessage.value = 'Please enter your email address to reset your password.';
+      successMessage.value = '';
+      return;
+    }
+
+    sendPasswordResetEmail(auth, email.value)
+      .then(() => {
+        errorMessage.value = '';
+        successMessage.value = 'A password reset link has been sent to ${email.value}. Please check your inbox.';
+      })
+      .catch((error) => {
+        console.error('Password Reset Error:', error.message);
+        successMessage.value = '';
+        switch (error.code) {
+          case 'auth/invalid-email':
+            errorMessage.value = 'Please enter a valid email address.';
+            break;
+          case 'auth/user-not-found':
+            errorMessage.value = 'No account found with this email.';
+            break;
+          default:
+            errorMessage.value = 'An error occurred. Please try again.';
+            break;
+        }
+      });
+  };
+
+  // --- NEW: Function to handle Google Sign-In ---
+  const signInWithGoogle = () => {
+    const provider = new GoogleAuthProvider();
+    signInWithPopup(auth, provider)
+      .then((result) => {
+        const user = result.user;
+        console.log('Successfully signed in with Google:', user);
+        errorMessage.value = '';
+        successMessage.value = '';
+        router.push('/dashboard'); // Redirect to dashboard on success
+      }).catch((error) => {
+        console.error('Google Sign-In Error:', error);
+        errorMessage.value = `Failed to sign in with Google. ${error.message}`;
+      });
+  };
   </script>
 
   <template>
@@ -13,51 +103,56 @@
           <p class="text-gray-500">Sign in to access your dashboard</p>
         </div>
 
-        <form>
+        <form @submit.prevent="signIn">
           <div class="mb-4">
-            <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Email
-  Address</label>
+            <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
             <div class="relative">
               <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Icon icon="ph:envelope-simple" class="h-5 w-5 text-gray-400" />
               </div>
-              <input type="email" name="email" id="email" class="block w-full pl-10 pr-3 py-2 border
-   border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500
-  sm:text-sm" placeholder="you@example.com">
+              <input v-model="email" type="email" name="email" id="email" class="block w-full pl-10 pr-3 py-2 border border-gray-300
+  rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="you@example.com" required>
             </div>
           </div>
 
           <div class="mb-6">
-            <label for="password" class="block text-sm font-medium text-gray-700
-  mb-2">Password</label>
+            <label for="password" class="block text-sm font-medium text-gray-700 mb-2">Password</label>
             <div class="relative">
               <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                 <Icon icon="ph:lock-simple" class="h-5 w-5 text-gray-400" />
               </div>
-              <input type="password" name="password" id="password" class="block w-full pl-10 pr-3
-  py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-blue-500
-  focus:border-blue-500 sm:text-sm" placeholder="••••••••">
+              <input v-model="password" type="password" name="password" id="password" class="block w-full pl-10 pr-3 py-2 border
+  border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="••••••••" required>
             </div>
           </div>
 
           <div class="flex items-center justify-end mb-6">
             <div class="text-sm">
-              <a href="#" class="font-medium text-blue-600 hover:text-blue-500">
+              <a href="#" @click.prevent="handlePasswordReset" class="font-medium text-blue-600 hover:text-blue-500">
                 Forgot your password?
               </a>
             </div>
           </div>
 
+          <!-- Display error message -->
+          <div v-if="errorMessage" class="mb-4 text-red-600 text-sm text-center">
+            {{ errorMessage }}
+          </div>
+
+          <!-- Display success message -->
+          <div v-if="successMessage" class="mb-4 text-green-600 text-sm text-center">
+            {{ successMessage }}
+          </div>
+
           <div>
-            <button type="submit" class="w-full flex justify-center py-2 px-4 border
-  border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600
-  hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+            <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm
+  font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
               Sign In
             </button>
           </div>
         </form>
 
-        <!-- START: New Code Added -->
+        <!-- Google Sign-in -->
         <div class="mt-6">
           <div class="relative">
             <div class="absolute inset-0 flex items-center">
@@ -69,16 +164,15 @@
               </span>
             </div>
           </div>
-
           <div class="mt-6">
-            <button type="button" class="w-full inline-flex justify-center py-2 px-4 border
-  border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+            <!-- UPDATED: Call our new signInWithGoogle function -->
+            <button @click="signInWithGoogle" type="button" class="w-full inline-flex justify-center py-2 px-4 border border-gray-300
+  rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
               <Icon icon="flat-color-icons:google" class="h-5 w-5" />
               <span class="ml-2">Sign in with Google</span>
             </button>
           </div>
         </div>
-        <!-- END: New Code Added -->
 
       </div>
     </div>
