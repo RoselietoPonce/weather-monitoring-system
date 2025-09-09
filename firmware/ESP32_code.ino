@@ -21,7 +21,7 @@ DHT dht_sensor(DHT_SENSOR_PIN, DHT_SENSOR_TYPE);
 // --- TIMING & STATE VARIABLES ---
 unsigned long sendDataPrevMillis = 0;
 // Let's send data every 10 seconds for now. You can increase this later.
-unsigned long dataSendInterval = 10000;
+unsigned long dataSendInterval = 3000;
 bool signupOK = false;
 
 // This is the missing callback function. It runs when Firebase token status changes.
@@ -102,31 +102,41 @@ void loop()
     Serial.printf("Rainfall Level: %d %%\n", rainPercent);
 
     // --- 3. PREPARE DATA AS A JSON OBJECT ---
-    // This is the modern way to send multiple values at once.
     FirebaseJson jsonData;
     jsonData.set("temperature", temperature);
     jsonData.set("humidity", humidity);
     jsonData.set("rainfall", rainPercent);
     // This special value tells Firebase to use its own server time as the timestamp.
-    // This is much more reliable than using the ESP32's internal clock.
     jsonData.set("timestamp/.sv", "timestamp");
 
-    // --- 4. PUSH THE JSON OBJECT TO FIREBASE ---
-    // We use pushJSON to create a NEW entry in the database for every reading.
-    // This is the correct way to store historical data.
-    // All readings will be stored under a parent node called "sensor_logs".
-    String path = "/sensor_logs";
-    if (Firebase.RTDB.pushJSON(&fbdo, path, &jsonData))
+    // --- 4. PUSH THE JSON OBJECT TO FIREBASE (FOR HISTORICAL LOGS) ---
+    String historyPath = "/sensor_logs";
+    if (Firebase.RTDB.pushJSON(&fbdo, historyPath, &jsonData))
     {
-      Serial.println("SUCCESS: Data pushed to Firebase.");
+      Serial.println("SUCCESS: Historical data pushed to Firebase.");
       Serial.print("  > New log created with unique key: ");
-      Serial.println(fbdo.pushName()); // This is the unique ID like "-Nq..._xyz"
+      Serial.println(fbdo.pushName());
     }
     else
     {
-      Serial.println("FAILED: Could not push data.");
+      Serial.println("FAILED: Could not push historical data.");
       Serial.println("  > REASON: " + fbdo.errorReason());
     }
+
+    // --- 5. SET THE JSON OBJECT TO THE 'LATEST' PATH (FOR THE DASHBOARD) ---
+    // This is the key change. We use 'set' to overwrite the data at a fixed path.
+    // Your Vue.js app is listening for this specific path!
+    String latestPath = "/sensor_data/latest";
+    if (Firebase.RTDB.setJSON(&fbdo, latestPath, &jsonData))
+    {
+      Serial.println("SUCCESS: Latest data updated in Firebase.");
+    }
+    else
+    {
+      Serial.println("FAILED: Could not update latest data.");
+      Serial.println("  > REASON: " + fbdo.errorReason());
+    }
+
     Serial.println("----------------------------------------");
   }
 }
