@@ -93,87 +93,125 @@
   </script>
 
   <template>
-    <div class="min-h-screen flex items-center justify-center bg-gray-100">
-      <div class="max-w-md w-full bg-white rounded-lg shadow-md p-8">
-        <div class="text-center mb-8">
-          <div class="flex justify-center text-blue-500 mb-4">
-            <Icon icon="ph:cloud-sun-bold" class="h-16 w-16" />
+  <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50 p-4">
+    <div class="max-w-md w-full backdrop-blur-sm bg-white/80 rounded-2xl shadow-xl p-8 transition-all duration-300">
+      <!-- Enhanced Header -->
+      <div class="text-center mb-8">
+        <div class="flex justify-center mb-4">
+          <div class="p-4 rounded-full bg-blue-50 shadow-inner">
+            <Icon icon="ph:cloud-sun-bold" class="h-16 w-16 text-blue-500" />
           </div>
-          <h2 class="text-2xl font-bold text-gray-800">Welcome Back</h2>
-          <p class="text-gray-500">Sign in to access your dashboard</p>
+        </div>
+        <h2 class="text-3xl font-bold text-gray-800 mb-2">Weather Monitoring</h2>
+        <p class="text-gray-600">Sign in to access your dashboard</p>
+      </div>
+
+      <form @submit.prevent="signIn" class="space-y-6">
+        <!-- Email Input -->
+        <div>
+          <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+          <div class="relative group">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Icon icon="ph:envelope-simple" class="h-5 w-5 text-gray-400 group-hover:text-blue-500 transition-colors" />
+            </div>
+            <input
+              v-model="email"
+              type="email"
+              name="email"
+              id="email"
+              class="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-xl
+                     focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                     transition-all duration-300 bg-white/50 backdrop-blur-sm"
+              placeholder="you@example.com"
+              required
+            >
+          </div>
         </div>
 
-        <form @submit.prevent="signIn">
-          <div class="mb-4">
-            <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
-            <div class="relative">
-              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Icon icon="ph:envelope-simple" class="h-5 w-5 text-gray-400" />
-              </div>
-              <input v-model="email" type="email" name="email" id="email" class="block w-full pl-10 pr-3 py-2 border border-gray-300
-  rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="you@example.com" required>
+        <!-- Password Input -->
+        <div>
+          <label for="password" class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+          <div class="relative group">
+            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <Icon icon="ph:lock-simple" class="h-5 w-5 text-gray-400 group-hover:text-blue-500 transition-colors" />
             </div>
+            <input
+              v-model="password"
+              type="password"
+              name="password"
+              id="password"
+              class="block w-full pl-10 pr-3 py-2.5 border border-gray-200 rounded-xl
+                     focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+                     transition-all duration-300 bg-white/50 backdrop-blur-sm"
+              placeholder="••••••••"
+              required
+            >
           </div>
+        </div>
 
-          <div class="mb-6">
-            <label for="password" class="block text-sm font-medium text-gray-700 mb-2">Password</label>
-            <div class="relative">
-              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Icon icon="ph:lock-simple" class="h-5 w-5 text-gray-400" />
-              </div>
-              <input v-model="password" type="password" name="password" id="password" class="block w-full pl-10 pr-3 py-2 border
-  border-gray-300 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm" placeholder="••••••••" required>
-            </div>
-          </div>
+        <!-- Forgot Password Link -->
+        <div class="flex items-center justify-end">
+          <button
+            @click.prevent="handlePasswordReset"
+            class="text-sm font-medium text-blue-600 hover:text-blue-500 transition-colors"
+          >
+            Forgot your password?
+          </button>
+        </div>
 
-          <div class="flex items-center justify-end mb-6">
-            <div class="text-sm">
-              <a href="#" @click.prevent="handlePasswordReset" class="font-medium text-blue-600 hover:text-blue-500">
-                Forgot your password?
-              </a>
-            </div>
-          </div>
+        <!-- Error & Success Messages -->
+        <div v-if="errorMessage" class="p-3 rounded-lg bg-red-50 border border-red-100">
+          <p class="text-red-600 text-sm text-center">{{ errorMessage }}</p>
+        </div>
 
-          <!-- Display error message -->
-          <div v-if="errorMessage" class="mb-4 text-red-600 text-sm text-center">
-            {{ errorMessage }}
-          </div>
+        <div v-if="successMessage" class="p-3 rounded-lg bg-green-50 border border-green-100">
+          <p class="text-green-600 text-sm text-center">{{ successMessage }}</p>
+        </div>
 
-          <!-- Display success message -->
-          <div v-if="successMessage" class="mb-4 text-green-600 text-sm text-center">
-            {{ successMessage }}
-          </div>
-
-          <div>
-            <button type="submit" class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm
-  font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-              Sign In
-            </button>
-          </div>
-        </form>
+        <!-- Sign In Button -->
+        <button
+          type="submit"
+          class="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-xl
+                 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700
+                 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500
+                 transition-all duration-300 shadow-lg hover:shadow-xl"
+        >
+          Sign In
+        </button>
 
         <!-- Google Sign-in -->
-        <div class="mt-6">
-          <div class="relative">
-            <div class="absolute inset-0 flex items-center">
-              <div class="w-full border-t border-gray-300"></div>
-            </div>
-            <div class="relative flex justify-center text-sm">
-              <span class="px-2 bg-white text-gray-500">
-                Or continue with
-              </span>
-            </div>
+        <div class="relative">
+          <div class="absolute inset-0 flex items-center">
+            <div class="w-full border-t border-gray-200"></div>
           </div>
-          <div class="mt-6">
-            <!-- UPDATED: Call our new signInWithGoogle function -->
-            <button @click="signInWithGoogle" type="button" class="w-full inline-flex justify-center py-2 px-4 border border-gray-300
-  rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
-              <Icon icon="flat-color-icons:google" class="h-5 w-5" />
-              <span class="ml-2">Sign in with Google</span>
-            </button>
+          <div class="relative flex justify-center text-sm">
+            <span class="px-2 bg-white text-gray-500">Or continue with</span>
           </div>
         </div>
 
-      </div>
+        <button
+          @click="signInWithGoogle"
+          type="button"
+          class="w-full flex items-center justify-center py-2.5 px-4 border border-gray-200
+                 rounded-xl shadow-sm bg-white hover:bg-gray-50 transition-all duration-300"
+        >
+          <Icon icon="flat-color-icons:google" class="h-5 w-5" />
+          <span class="ml-2 text-sm font-medium text-gray-700">Sign in with Google</span>
+        </button>
+      </form>
     </div>
-  </template>
+  </div>
+</template>
+
+<style scoped>
+.backdrop-blur-sm {
+  backdrop-filter: blur(8px);
+}
+
+@media (max-width: 640px) {
+  .max-w-md {
+    max-width: 100%;
+    margin: 1rem;
+  }
+}
+</style>
