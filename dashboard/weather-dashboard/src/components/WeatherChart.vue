@@ -1,9 +1,10 @@
 <script setup>
-import { ref as vueRef, onMounted, onUnmounted, watch, computed } from 'vue';
+import { ref, onUnmounted, watch, computed } from 'vue';
 import { db } from '@/firebase.js';
 import {
   ref as dbRef,
   onValue,
+  off,
   query,
   limitToLast,
   orderByChild,
@@ -22,6 +23,7 @@ import {
   Decimation,
 } from 'chart.js';
 
+// ✅ Register Chart.js plugins
 ChartJS.register(
   CategoryScale,
   LinearScale,
@@ -33,132 +35,177 @@ ChartJS.register(
   Decimation
 );
 
+// Time ranges
 const TIME_RANGES = {
   LAST_7: 'last7',
   WEEKLY: 'weekly',
   MONTHLY: 'monthly',
-  YEARLY: 'yearly'
+  YEARLY: 'yearly',
 };
 
+// Days in range (added LAST_7 for consistency)
 const DAYS_IN_RANGE = {
+  [TIME_RANGES.LAST_7]: 7,
   [TIME_RANGES.WEEKLY]: 7,
   [TIME_RANGES.MONTHLY]: 30,
-  [TIME_RANGES.YEARLY]: 365
+  [TIME_RANGES.YEARLY]: 365,
 };
 
-const isLoading = vueRef(false);
-const selectedTimeRange = vueRef(TIME_RANGES.LAST_7);
-let unsubscribeHistory;
+// State
+const isLoading = ref(false);
+const selectedTimeRange = ref(TIME_RANGES.LAST_7);
 
-const chartData = vueRef({
+// ✅ Keep a reference to current listener ref (not function)
+let unsubscribeRef = null;
+
+// Chart data (reactive)
+const chartData = ref({
   labels: [],
   datasets: [
     {
       label: 'Temperature (°C)',
-      backgroundColor: 'rgba(239, 68, 68, 0.2)',
       borderColor: 'rgba(239, 68, 68, 1)',
-      borderWidth: 2,
-      pointBackgroundColor: 'rgba(239, 68, 68, 1)',
-      pointBorderColor: '#fff',
-      pointHoverBackgroundColor: '#fff',
-      pointHoverBorderColor: 'rgba(239, 68, 68, 1)',
-      tension: 0.4,
+      backgroundColor: 'rgba(239, 68, 68, 0.2)',
       data: [],
-      yAxisID: 'y'
+      borderWidth: 2,
+      tension: 0.4,
+      yAxisID: 'y',
     },
     {
       label: 'Humidity (%)',
-      backgroundColor: 'rgba(59, 130, 246, 0.2)',
       borderColor: 'rgba(59, 130, 246, 1)',
-      borderWidth: 2,
-      pointBackgroundColor: 'rgba(59, 130, 246, 1)',
-      pointBorderColor: '#fff',
-      pointHoverBackgroundColor: '#fff',
-      pointHoverBorderColor: 'rgba(59, 130, 246, 1)',
-      tension: 0.4,
+      backgroundColor: 'rgba(59, 130, 246, 0.2)',
       data: [],
-      yAxisID: 'y1'
+      borderWidth: 2,
+      tension: 0.4,
+      yAxisID: 'y1',
     },
     {
       label: 'Rainfall (mm)',
-      backgroundColor: 'rgba(99, 102, 241, 0.2)',
       borderColor: 'rgba(99, 102, 241, 1)',
-      borderWidth: 2,
-      pointBackgroundColor: 'rgba(99, 102, 241, 1)',
-      pointBorderColor: '#fff',
-      pointHoverBackgroundColor: '#fff',
-      pointHoverBorderColor: 'rgba(99, 102, 241, 1)',
-      tension: 0.4,
+      backgroundColor: 'rgba(99, 102, 241, 0.2)',
       data: [],
-      yAxisID: 'y2'
-    }
+      borderWidth: 2,
+      tension: 0.4,
+      yAxisID: 'y2',
+    },
   ],
 });
 
+// ✅ Computed version ensures all values are numbers
 const processedChartData = computed(() => ({
   labels: chartData.value.labels,
-  datasets: chartData.value.datasets.map(dataset => ({
-    ...dataset,
-    data: dataset.data.map(value => Number(value))
-  }))
+  datasets: chartData.value.datasets.map(ds => ({
+    ...ds,
+    data: ds.data.map(v => Number(v) || 0),
+  })),
 }));
 
+// Chart options
 const chartOptions = {
   responsive: true,
   maintainAspectRatio: false,
-  responsiveAnimationDuration: 0,
-  interaction: {
-    mode: 'nearest',
-    axis: 'x',
-    intersect: false
-  },
-  elements: {
-    line: { tension: 0.4 },
-    point: { radius: 2, hitRadius: 10, hoverRadius: 4 }
-  },
+  interaction: { mode: 'nearest', axis: 'x', intersect: false },
   plugins: {
+    legend: { position: 'top', labels: { usePointStyle: true, padding: 20 } },
     tooltip: {
       mode: 'index',
       intersect: false,
       callbacks: {
-        title: (context) => context[0].label,
-        label: (context) => {
-          let label = context.dataset.label || '';
-          if (label) label += ': ';
-          if (context.parsed.y !== null) label += context.parsed.y.toFixed(1);
-          return label;
-        }
-      }
-    },
-    legend: {
-      position: 'top',
-      align: 'center',
-      labels: { usePointStyle: true, padding: 20 }
+        label: (ctx) =>
+          `${ctx.dataset.label}: ${
+            ctx.parsed.y != null ? ctx.parsed.y.toFixed(1) : 0
+          }`,
+      },
     },
   },
   scales: {
-    x: { grid: { display: false }, ticks: { maxRotation: 45, minRotation: 45, autoSkip: true, maxTicksLimit: 20 } },
-    y: { type: 'linear', display: true, position: 'left', title: { display: true, text: 'Temperature (°C)' }, ticks: { callback: value => `${value}°C` } },
-    y1: { type: 'linear', display: true, position: 'right', title: { display: true, text: 'Humidity (%)' }, ticks: { callback: value => `${value}%` }, grid: { drawOnChartArea: false } },
-    y2: { type: 'linear', display: true, position: 'right', title: { display: true, text: 'Rainfall (mm)' }, ticks: { callback: value => `${value}mm` }, grid: { drawOnChartArea: false } }
-  }
+    x: { ticks: { autoSkip: true, maxRotation: 45, minRotation: 45 } },
+    y: {
+      type: 'linear',
+      display: true,
+      position: 'left',
+      title: { display: true, text: 'Temperature (°C)' },
+      ticks: { callback: (v) => `${v}°C` },
+    },
+    y1: {
+      type: 'linear',
+      display: true,
+      position: 'right',
+      grid: { drawOnChartArea: false },
+      title: { display: true, text: 'Humidity (%)' },
+      ticks: { callback: (v) => `${v}%` },
+    },
+    y2: {
+      type: 'linear',
+      display: true,
+      position: 'right',
+      grid: { drawOnChartArea: false },
+      title: { display: true, text: 'Rainfall (mm)' },
+      ticks: { callback: (v) => `${v}mm` },
+    },
+  },
 };
 
+// ======================
+// Helpers
+// ======================
 const processRecords = (records, range) => {
-  const labels = [];
-  const tempData = [];
-  const humidityData = [];
-  const rainfallData = [];
+  if (range === TIME_RANGES.LAST_7) {
+    const labels = records.map(r =>
+      formatTimestamp(new Date(r.timestamp), range)
+    );
+    const temp = records.map(r => Number(r.temperature) || 0);
+    const hum = records.map(r => Number(r.humidity) || 0);
+    const rain = records.map(r => Number(r.rainfall) || 0);
+    return { labels, temp, hum, rain };
+  }
 
-  records.forEach(record => {
+  // Group data for weekly/monthly/yearly
+  const groupedData = records.reduce((acc, record) => {
     const date = new Date(record.timestamp);
-    const label = formatTimestamp(date, range);
-    labels.push(label);
-    tempData.push(parseFloat(record.temperature) || 0);
-    humidityData.push(parseFloat(record.humidity) || 0);
-    rainfallData.push(parseFloat(record.rainfall) || 0);
+    let key;
+
+    if (range === TIME_RANGES.YEARLY) {
+      key = `${date.getFullYear()}-${date.getMonth()}`; // by month
+    } else {
+      key = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`; // by day
+    }
+
+    if (!acc[key]) {
+      acc[key] = {
+        timestamp: date,
+        temps: [],
+        hums: [],
+        rains: [],
+        count: 0,
+      };
+    }
+
+    acc[key].temps.push(Number(record.temperature) || 0);
+    acc[key].hums.push(Number(record.humidity) || 0);
+    acc[key].rains.push(Number(record.rainfall) || 0);
+    acc[key].count++;
+    return acc;
+  }, {});
+
+  const sortedGroups = Object.values(groupedData).sort(
+    (a, b) => a.timestamp - b.timestamp
+  );
+
+  const labels = [];
+  const temp = [];
+  const hum = [];
+  const rain = [];
+
+  sortedGroups.forEach(group => {
+    labels.push(formatTimestamp(group.timestamp, range));
+    temp.push(group.temps.reduce((a, b) => a + b, 0) / group.count);
+    hum.push(group.hums.reduce((a, b) => a + b, 0) / group.count);
+    rain.push(group.rains.reduce((a, b) => a + b, 0) / group.count);
   });
-  return { labels, tempData, humidityData, rainfallData };
+
+  return { labels, temp, hum, rain };
 };
 
 const formatTimestamp = (date, range) => {
@@ -166,57 +213,89 @@ const formatTimestamp = (date, range) => {
     case TIME_RANGES.LAST_7:
       return date.toLocaleString([], { hour: '2-digit', minute: '2-digit' });
     case TIME_RANGES.WEEKLY:
-      return date.toLocaleString([], { weekday: 'short', hour: '2-digit', minute: '2-digit' });
+      return date.toLocaleString([], {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric',
+      });
     case TIME_RANGES.MONTHLY:
-      return date.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit' });
-    case TIME_RANGES.YEARLY:
       return date.toLocaleString([], { month: 'short', day: 'numeric' });
+    case TIME_RANGES.YEARLY:
+      return date.toLocaleString([], { month: 'long' });
     default:
       return date.toLocaleString();
   }
 };
 
-const listenForHistoricalData = async () => {
+// ======================
+// Firebase Listener
+// ======================
+const listenForHistoricalData = () => {
   isLoading.value = true;
+
   try {
-    if (unsubscribeHistory) unsubscribeHistory();
+    // ✅ detach old listener
+    if (unsubscribeRef) off(unsubscribeRef);
+
     const historyRef = dbRef(db, 'sensor_logs');
-    let historyQuery;
     const range = selectedTimeRange.value;
+    let historyQuery;
 
     if (range === TIME_RANGES.LAST_7) {
       historyQuery = query(historyRef, orderByChild('timestamp'), limitToLast(7));
     } else {
       const now = Date.now();
-      const startTime = now - DAYS_IN_RANGE[range] * 24 * 60 * 60 * 1000;
+      const startTime = now - DAYS_IN_RANGE[range] * 86400000;
       historyQuery = query(historyRef, orderByChild('timestamp'), startAt(startTime));
     }
 
-    unsubscribeHistory = onValue(historyQuery, (snapshot) => {
-      if (!snapshot.exists()) {
-        chartData.value.labels = [];
-        chartData.value.datasets.forEach(dataset => dataset.data = []);
-        return;
+    // Keep reference for cleanup
+    unsubscribeRef = historyRef;
+
+    onValue(
+      historyQuery,
+      (snap) => {
+        if (!snap.exists()) {
+          chartData.value = {
+            ...chartData.value,
+            labels: [],
+            datasets: chartData.value.datasets.map(ds => ({ ...ds, data: [] })),
+          };
+          isLoading.value = false;
+          return;
+        }
+
+        const records = Object.values(snap.val());
+        const { labels, temp, hum, rain } = processRecords(records, range);
+
+        // ✅ update chart reactively (not mutate deep arrays directly)
+        chartData.value = {
+          ...chartData.value,
+          labels,
+          datasets: [
+            { ...chartData.value.datasets[0], data: temp },
+            { ...chartData.value.datasets[1], data: hum },
+            { ...chartData.value.datasets[2], data: rain },
+          ],
+        };
+        isLoading.value = false;
+      },
+      (error) => {
+        console.error('Firebase onValue error:', error);
+        isLoading.value = false;
       }
-      const data = snapshot.val();
-      const records = Object.values(data).sort((a, b) => a.timestamp - b.timestamp);
-      const { labels, tempData, humidityData, rainfallData } = processRecords(records, range);
-      chartData.value.labels = labels;
-      chartData.value.datasets[0].data = tempData;
-      chartData.value.datasets[1].data = humidityData;
-      chartData.value.datasets[2].data = rainfallData;
-    });
-  } catch (error) {
-    console.error('Error fetching historical data:', error);
-  } finally {
+    );
+  } catch (err) {
+    console.error('Error fetching data:', err);
     isLoading.value = false;
   }
 };
 
+// Lifecycle
 watch(selectedTimeRange, listenForHistoricalData, { immediate: true });
 
 onUnmounted(() => {
-  if (unsubscribeHistory) unsubscribeHistory();
+  if (unsubscribeRef) off(unsubscribeRef);
 });
 </script>
 
@@ -228,7 +307,7 @@ onUnmounted(() => {
         v-model="selectedTimeRange"
         :disabled="isLoading"
         class="bg-white/90 border border-gray-200 rounded-lg py-2 px-3 text-sm text-gray-700
-               focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+               focus:outline-none focus:ring-2 focus:ring-blue-500"
       >
         <option value="last7">Last 7 Readings</option>
         <option value="weekly">Weekly</option>
@@ -236,12 +315,15 @@ onUnmounted(() => {
         <option value="yearly">Yearly</option>
       </select>
     </div>
+
     <div class="relative h-[400px]">
-      <div v-if="isLoading"
-           class="absolute inset-0 flex items-center justify-center bg-white/50 backdrop-blur-sm rounded-xl">
+      <div
+        v-if="isLoading"
+        class="absolute inset-0 flex items-center justify-center bg-white/50 backdrop-blur-sm rounded-xl z-10"
+      >
         <div class="animate-pulse text-gray-600">Loading data...</div>
       </div>
-      <Line :data="processedChartData" :options="chartOptions" />
+      <Line v-if="!isLoading" :data="processedChartData" :options="chartOptions" />
     </div>
   </div>
 </template>

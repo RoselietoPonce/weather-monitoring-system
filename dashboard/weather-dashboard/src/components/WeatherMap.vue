@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref } from 'vue';
 import {
   LMap,
   LTileLayer,
@@ -9,6 +9,7 @@ import {
 import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 
+// Fix missing marker icons
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
@@ -19,11 +20,13 @@ L.Icon.Default.mergeOptions({
 const props = defineProps({
   mapCenter: {
     type: Array,
-    required: true
+    required: true,
+    validator: val => Array.isArray(val) && val.length === 2
   },
   markerLatLng: {
     type: Array,
-    required: true
+    required: true,
+    validator: val => Array.isArray(val) && val.length === 2
   },
   deviceAddress: {
     type: String,
@@ -67,23 +70,28 @@ const onMapError = (error) => {
   mapError.value = 'Failed to load map properly';
   isMapLoading.value = false;
 };
-
-const onMarkerClick = () => {
-  console.log('Weather station clicked');
-};
 </script>
 
 <template>
   <div class="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg">
+    <!-- Header -->
     <div class="flex items-center justify-between mb-6">
       <h3 class="text-lg font-medium text-gray-700">Station Location</h3>
       <span class="text-sm text-gray-600 font-medium">{{ deviceAddress }}</span>
     </div>
+
+    <!-- Map -->
     <div class="relative h-[400px] rounded-xl overflow-hidden">
       <div v-if="isMapLoading"
            class="absolute inset-0 flex items-center justify-center bg-white/50 backdrop-blur-sm z-10">
         <div class="animate-pulse text-gray-600">Loading map...</div>
       </div>
+
+      <div v-if="mapError"
+           class="absolute inset-0 flex items-center justify-center bg-red-100 text-red-600 font-medium z-20">
+        {{ mapError }}
+      </div>
+
       <l-map
         v-model:zoom="mapZoom"
         :center="mapCenter"
@@ -95,7 +103,7 @@ const onMarkerClick = () => {
           :url="mapConfig.tileUrl"
           :attribution="mapConfig.attribution"
         />
-        <l-marker :lat-lng="markerLatLng" @click="onMarkerClick">
+        <l-marker :lat-lng="markerLatLng">
           <l-popup :options="mapConfig.popupOptions">
             <div class="p-3">
               <h4 class="font-medium text-gray-800 mb-2">Weather Station</h4>

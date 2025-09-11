@@ -1,5 +1,5 @@
 <script setup>
-import { ref as vueRef, onMounted, onUnmounted } from 'vue';
+import { ref as vueRef, onMounted, onUnmounted, computed } from 'vue';
 import { db } from '@/firebase.js';
 import { ref as dbRef, onValue } from 'firebase/database';
 
@@ -16,7 +16,15 @@ const isLoading = vueRef(false);
 const mapCenter = vueRef([7.99795, 124.25324]);
 const markerLatLng = vueRef([7.99795, 124.25324]);
 const deviceAddress = vueRef('Weather Station Location');
+const lastUpdated = vueRef(null);
 let unsubscribeLatest;
+
+const isOnline = computed(() => {
+  if (!lastUpdated.value) return false;
+  // Assumes a 30-second window for "online" status
+  const now = Date.now();
+  return now - lastUpdated.value < 30000;
+});
 
 // Data for WeatherCards component
 const weatherData = [
@@ -75,6 +83,7 @@ onMounted(() => {
         temperature.value = data.temperature?.toFixed(1) || 'N/A';
         humidity.value = data.humidity?.toFixed(0) || 'N/A';
         rainfall.value = data.rainfall?.toFixed(1) || 'N/A';
+        lastUpdated.value = Date.now();
         updateDeviceLocation(data);
       }
       isLoading.value = false;
@@ -94,10 +103,12 @@ onUnmounted(() => {
   <div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 p-4 sm:p-6 lg:p-8">
     <div class="max-w-7xl mx-auto">
       <div class="mb-10 text-center">
-        <h1 class="text-4xl font-bold text-gray-800 mb-2">DASHBOARD</h1>
+        <h1 class="text-4xl font-bold text-gray-800 mb-2">MSU - Main Campus Weather Station</h1>
         <p class="text-gray-600 text-lg">
-          MSU-Main Campus Weather Station
+          <span :class="isOnline ? 'text-green-500' : 'text-red-500'">●</span>
+          {{ isOnline ? 'Online' : 'Offline' }}
         </p>
+        <p v-if="lastUpdated" class="text-sm text-gray-500 mt-1">Last updated: {{ new Date(lastUpdated).toLocaleString() }}</p>
       </div>
 
       <WeatherCards :weather-data="weatherData" :is-loading="isLoading" />

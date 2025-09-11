@@ -6,6 +6,7 @@ import '@/user.js'
 import './assets/main.css'
 import "leaflet/dist/leaflet.css"
 import L from 'leaflet'
+import VueApexCharts from 'vue3-apexcharts'; // Import the library
 
 // Fix Leaflet marker icon paths
 delete L.Icon.Default.prototype._getIconUrl
@@ -18,5 +19,6 @@ L.Icon.Default.mergeOptions({
 const app = createApp(App)
 
 app.use(router)
+app.use(VueApexCharts); // Register the component globally
 
 app.mount('#app')
