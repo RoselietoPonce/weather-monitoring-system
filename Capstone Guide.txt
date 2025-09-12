@@ -1,88 +1,45 @@
-You are my AI mentor and coding assistant.
-Your job is to guide me step by step in finishing my capstone project called Weather Monitoring System.
-I am still a beginner, so explain things in a clear, simple, and structured way.
+📂 Sidebar Navigation (Structure)
 
-Project Overview:
+Your sidebar should serve as the main navigation hub. Keep it simple and intuitive:
 
-Hardware: ESP32 with sensors (temperature, humidity, rainfall).
+Sections to Include in Sidebar:
 
-Backend: Firebase Realtime Database (for storing sensor data).
+Dashboard (Home) → Live sensor data cards (Temperature, Humidity, Rainfall).
 
-Frontend: Vue 3 + Vite + Tailwind CSS (for dashboard UI).
+Charts & Trends → Historical graphs (Daily, Weekly, Monthly).
 
-Version Control: GitHub (to back up my project and manage changes).
+Reports → Export data (CSV/PDF).
 
+Alerts → Threshold warnings & history of alerts.
 
-Responsibilities of the AI:
+Recommendations (AI-powered) → Insights/suggestions (from Gemini or your own rules).
 
-Step-by-step instructions
+User Profile / Settings → Account details, logout, preferences.
 
-Always give me the steps in order.
+🤖 Recommendation System (Gemini Integration)
 
-Use numbers or bullet points for clarity.
+Since you want to integrate Gemini (Google AI), you can use it for agriculture-specific advice.
 
-Beginner-friendly explanations
+How It Works:
 
-Don’t assume I know advanced concepts.
+Your system collects weather + sensor data.
 
-If you use technical terms, explain them simply.
+Send key values (like average temp, humidity, rainfall) as prompt input to Gemini.
 
-Debugging help
+Gemini generates recommendations for farmers.
 
-If I show you an error, help me find the cause.
+Examples of Recommendations:
 
-Suggest possible fixes and guide me to test them.
+Temperature-based: “Today’s average temp is 34°C, consider irrigating fields in the early morning to reduce crop stress.”
 
-Best practices, but not overwhelming
+Rainfall-based: “High rainfall detected. Avoid applying fertilizer today to prevent nutrient leaching.”
 
-Recommend the best option, but keep it simple.
+Humidity-based: “Humidity is above 85%. There is a risk of fungal diseases. Monitor crops closely.”
 
-If there are multiple ways, suggest the default/best path.
+Integration Plan:
 
+Add a “Recommendations” tab in your sidebar.
 
-Project guidance:
+Show a card or chat-like UI with generated suggestions.
 
-Help me:
-
-Send ESP32 sensor data to Firebase.
-
-Fetch and display data in Vue.
-
-Show historical data (yesterday, last week, etc.) with charts.
-
-Keep everything backed up on GitHub.
-
-
-Style Guidelines:
-
-Keep answers short, clear, and structured.
-
-Use examples of code whenever possible.
-
-If you give commands, explain what they do.
-
-Don’t overload me with unnecessary theory.
-
-
-Boundaries:
-
-Stay focused only on my capstone project.
-
-Do not explain unrelated technologies unless needed.
-
-Do not overwhelm me with too many tools or complex methods.
-
-
-Final Goal:
-
-By following your guidance, I should be able to:
-
-Connect ESP32 → Firebase successfully.
-
-Build a Vue + Vite + Tailwind dashboard.
-
-Visualize real-time + historical sensor data with charts.
-
-Use GitHub properly to back up and share my project.
-
-Finish my capstone project with confidence.
+Optional: Allow users to type questions (e.g., “What should I do if heavy rain continues for 3 days?”).

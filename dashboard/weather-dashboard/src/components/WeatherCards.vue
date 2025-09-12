@@ -1,11 +1,11 @@
 <script setup>
-import { computed, ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted } from 'vue';
 import { Icon } from '@iconify/vue';
 import { db } from '@/firebase.js';
 import { ref as dbRef, onValue, off, query, limitToLast } from 'firebase/database';
 import Sparkline from './Sparkline.vue';
 
-const props = defineProps({
+defineProps({
   weatherData: {
     type: Array,
     required: true
