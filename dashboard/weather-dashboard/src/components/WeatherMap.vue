@@ -1,5 +1,5 @@
 <script setup>
-  import { ref, watch } from 'vue';
+  import { ref, watch, nextTick } from 'vue'; // Import nextTick
   import {
     LMap,
     LTileLayer,
@@ -17,7 +17,7 @@
     shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
   });
 
-  const props = defineProps({
+  defineProps({
     mapCenter: {
       type: Array,
       required: true,
@@ -61,7 +61,7 @@
   const mapZoom = ref(mapConfig.zoom);
   const isMapLoading = ref(true);
   const mapError = ref(null);
-  const mapRef = ref(null);
+  const mapRef = ref(null); // This ref is connected to your <l-map>
 
   const onMapReady = () => {
     isMapLoading.value = false;
@@ -73,20 +73,17 @@
     isMapLoading.value = false;
   };
 
-  watch(() => props.mapCenter, (newCenter) => {
-  if (mapRef.value && newCenter) {
-    const lat = Number(newCenter[0]);
-    const lng = Number(newCenter[1]);
-
-    if (!isNaN(lat) && !isNaN(lng)) {
-      mapRef.value.leafletObject.setView([lat, lng], mapConfig.zoom);
-    } else {
-      console.warn("Invalid map center:", newCenter);
+  // --- THE FIX IS HERE ---
+  // Watch for the mapRef to be populated. This happens when the v-if becomes true.
+  watch(mapRef, (newMapRefValue) => {
+    if (newMapRefValue) {
+      // Use nextTick to ensure the DOM is fully updated and the map container has a size.
+      nextTick(() => {
+        // Access the underlying Leaflet map object and call invalidateSize().
+        newMapRefValue.leafletObject.invalidateSize();
+      });
     }
-  }
-});
-
-
+  });
   </script>
 
   <template>

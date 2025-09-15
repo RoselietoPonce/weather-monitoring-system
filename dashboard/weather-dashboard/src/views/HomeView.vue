@@ -1,134 +1,51 @@
-<script setup>
-  import { ref as vueRef, onMounted, onUnmounted, computed } from 'vue';
-  import { db } from '@/firebase.js';
-  import { ref as dbRef, onValue } from 'firebase/database';
-
-  // Import the new child components
-  import WeatherCards from '@/components/WeatherCards.vue';
-  import WeatherChart from '@/components/WeatherChart.vue';
-  import WeatherMap from '@/components/WeatherMap.vue';
-
-  // State Management
-  const temperature = vueRef('N/A');
-  const humidity = vueRef('N/A');
-  const rainfall = vueRef('N/A');
-  const isLoading = vueRef(false);
-  const mapCenter = vueRef([7.99795, 124.25324]);
-  const markerLatLng = vueRef([7.99795, 124.25324]);
-  const deviceAddress = vueRef('Weather Station Location');
-  const lastUpdated = vueRef(null);
-  let unsubscribeLatest;
-
-  const isOnline = computed(() => {
-    if (!lastUpdated.value) return false;
-    // Assumes a 30-second window for "online" status
-    const now = Date.now();
-    return now - lastUpdated.value < 30000;
-  });
-
-  // Data for WeatherCards component
-  const weatherData = [
-    {
-      id: 'temp',
-      title: 'Temperature',
-      value: temperature,
-      unit: '°C',
-      icon: 'ph:thermometer-cold-bold',
-      color: 'text-red-500',
-      bgColor: 'bg-red-100'
-    },
-    {
-      id: 'humidity',
-      title: 'Humidity',
-      value: humidity,
-      unit: '%',
-      icon: 'ph:drop-bold',
-      color: 'text-blue-500',
-      bgColor: 'bg-blue-100'
-    },
-    {
-      id: 'rainfall',
-      title: 'Rainfall',
-      value: rainfall,
-      unit: 'mm',
-      icon: 'ph:cloud-rain-bold',
-      color: 'text-indigo-500',
-      bgColor: 'bg-indigo-100'
-    },
-  ];
-
-  // Location Update Handler
-const updateDeviceLocation = (data) => {
-  try {
-    if (data.location) {
-      const { lat, lng, address } = data.location;
-
-      // Convert to numbers
-      const latNum = Number(lat);
-      const lngNum = Number(lng);
-
-      // ✅ Only update if valid and not [0,0]
-      if (!isNaN(latNum) && !isNaN(lngNum) && latNum !== 0 && lngNum !== 0) {
-        mapCenter.value = [latNum, lngNum];
-        markerLatLng.value = [latNum, lngNum];
-        deviceAddress.value = address || 'Weather Station Location';
-        console.log("📍 Updated map location:", mapCenter.value);
-      } else {
-        console.warn("⚠️ Invalid coords received, keeping fallback:", { lat, lng });
-      }
-    } else {
-      console.warn("⚠️ No location in Firebase, keeping fallback");
-    }
-  } catch (error) {
-    console.error("Error updating device location:", error);
-  }
-};
-
-
-  onMounted(() => {
-    isLoading.value = true;
-    try {
-      const latestDataRef = dbRef(db, 'sensor_data/latest');
-      unsubscribeLatest = onValue(latestDataRef, (snapshot) => {
-        const data = snapshot.val();
-        if (data) {
-          temperature.value = data.temperature?.toFixed(1) || 'N/A';
-          humidity.value = data.humidity?.toFixed(0) || 'N/A';
-          rainfall.value = data.rainfall?.toFixed(1) || 'N/A';
-          lastUpdated.value = Date.now();
-          updateDeviceLocation(data);
-        }
-        isLoading.value = false;
-      });
-    } catch (error) {
-      console.error('Error setting up data listeners:', error);
-      isLoading.value = false;
-    }
-  });
-
-  onUnmounted(() => {
-    if (unsubscribeLatest) unsubscribeLatest();
-  });
-  </script>
-
-  <template>
-    <div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 p-4 sm:p-6 lg:p-8">
+<template>
+    <div class="p-4 sm:p-6 lg:p-8">
       <div class="max-w-7xl mx-auto">
-        <div class="mb-10 text-center">
-          <h1 class="text-4xl font-bold text-gray-800 mb-2">MSU - Main Campus Weather Station</h1>
-          <p class="text-gray-600 text-lg">
-            <span :class="isOnline ? 'text-green-500' : 'text-red-500'">●</span>
-            {{ isOnline ? 'Online' : 'Offline' }}
-          </p>
-          <p v-if="lastUpdated" class="text-sm text-gray-500 mt-1">Last updated: {{ new Date(lastUpdated).toLocaleString() }}</p>
-        </div>
+        <!-- Header -->
+        <header class="flex items-center justify-between mb-10">
+          <!-- Left Side: Title -->
+          <h1 class="text-4xl font-bold text-gray-800 tracking-tight">Dashboard</h1>
 
+          <!-- Right Side: Status Indicators -->
+          <div class="flex items-center text-sm text-gray-500" aria-live="polite">
+            <!-- Connecting State -->
+            <span v-if="lastUpdated === null">Connecting...</span>
+
+            <!-- Online/Offline State -->
+            <template v-else>
+              <div class="flex items-center">
+                <span class="relative flex h-3 w-3 mr-2">
+                  <span
+                    v-if="isOnline"
+                    class="animate-pulse absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"
+                  ></span>
+                  <span
+                    class="relative inline-flex rounded-full h-3 w-3"
+                    :class="isOnline ? 'bg-green-500' : 'bg-red-500'"
+                  ></span>
+                </span>
+                <span>{{ isOnline ? 'Online' : 'Offline' }}</span>
+              </div>
+
+              <!-- Last Updated Timestamp -->
+              <div v-if="lastUpdated" class="flex items-center ml-4">
+                <span class="mx-2 text-gray-300">|</span>
+                <span>Last updated: {{ new Date(lastUpdated).toLocaleString() }}</span>
+              </div>
+            </template>
+          </div>
+        </header>
+
+        <!-- Weather Cards -->
         <WeatherCards :weather-data="weatherData" :is-loading="isLoading" />
 
-        <div class="mt-10 grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <WeatherChart />
+        <!-- Map Section -->
+        <section class="mt-10">
+          <h2 class="text-2xl font-bold text-gray-700 mb-4">Station Location</h2>
 
+          <!-- Map -->
           <WeatherMap
+            v-if="mapCenter && markerLatLng"
             :map-center="mapCenter"
             :marker-lat-lng="markerLatLng"
             :device-address="deviceAddress"
@@ -136,7 +53,127 @@ const updateDeviceLocation = (data) => {
             :humidity="humidity"
             :rainfall="rainfall"
           />
-        </div>
+
+          <!-- Fallback -->
+          <div
+            v-else
+            class="bg-white rounded-2xl shadow-md p-6 h-96 flex items-center justify-center"
+          >
+            <p class="text-gray-500">Loading map data...</p>
+          </div>
+        </section>
       </div>
     </div>
   </template>
+
+  <script setup>
+  import { ref, onMounted, onUnmounted, computed } from 'vue';
+  import { rtdb } from '@/firebase.js';
+  import { ref as dbRef, onValue, off } from 'firebase/database';
+
+  // Components
+  import WeatherCards from '@/components/WeatherCards.vue';
+  import WeatherMap from '@/components/WeatherMap.vue';
+
+  // Reactive state
+  const temperature = ref('N/A');
+  const humidity = ref('N/A');
+  const rainfall = ref('N/A');
+  const isLoading = ref(false);
+  const mapCenter = ref(null);
+  const markerLatLng = ref(null);
+  const deviceAddress = ref('Weather Station Location');
+  const lastUpdated = ref(null);
+
+  let latestDataRef = null;
+
+  // Computed: Device status
+  const isOnline = computed(() => {
+    if (!lastUpdated.value) return false;
+    const now = Date.now();
+    return now - lastUpdated.value < 30000; // within 30s considered online
+  });
+
+  // Computed: Weather card data
+  const weatherData = computed(() => [
+    {
+      id: 'temp',
+      title: 'Temperature',
+      value: temperature.value,
+      unit: '°C',
+      icon: 'ph:thermometer-cold-bold',
+      color: 'text-red-500',
+      bgColor: 'bg-red-100',
+    },
+    {
+      id: 'humidity',
+      title: 'Humidity',
+      value: humidity.value,
+      unit: '%',
+      icon: 'ph:drop-bold',
+      color: 'text-blue-500',
+      bgColor: 'bg-blue-100',
+    },
+    {
+      id: 'rainfall',
+      title: 'Rainfall',
+      value: rainfall.value,
+      unit: 'mm',
+      icon: 'ph:cloud-rain-bold',
+      color: 'text-indigo-500',
+      bgColor: 'bg-indigo-100',
+    },
+  ]);
+
+  // Update device location
+  const updateDeviceLocation = (data) => {
+    try {
+      if (data.location) {
+        const { lat, lng, address } = data.location;
+        const latNum = Number(lat);
+        const lngNum = Number(lng);
+
+        if (!isNaN(latNum) && !isNaN(lngNum) && latNum !== 0 && lngNum !== 0) {
+          mapCenter.value = [latNum, lngNum];
+          markerLatLng.value = [latNum, lngNum];
+          deviceAddress.value = address || 'Weather Station Location';
+        }
+      }
+    } catch (error) {
+      console.error('Error updating device location:', error);
+    }
+  };
+
+  // Firebase listener
+  onMounted(() => {
+    isLoading.value = true;
+    latestDataRef = dbRef(rtdb, 'sensor_data/latest');
+
+    onValue(
+      latestDataRef,
+      (snapshot) => {
+        const data = snapshot.val();
+        if (data) {
+          temperature.value =
+            typeof data.temperature === 'number' ? data.temperature.toFixed(1) : 'N/A';
+          humidity.value =
+            typeof data.humidity === 'number' ? data.humidity.toFixed(0) : 'N/A';
+          rainfall.value =
+            typeof data.rainfall === 'number' ? data.rainfall.toFixed(1) : 'N/A';
+          lastUpdated.value = Date.now();
+          updateDeviceLocation(data);
+        }
+        isLoading.value = false;
+      },
+      (error) => {
+        console.error('Error setting up data listeners:', error);
+        isLoading.value = false;
+      }
+    );
+  });
+
+  // Cleanup listener
+  onUnmounted(() => {
+    if (latestDataRef) off(latestDataRef);
+  });
+  </script>

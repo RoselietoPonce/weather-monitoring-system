@@ -1,1 +1,20 @@
 @import "tailwindcss";
+
+/* Custom Scrollbar for Webkit Browsers */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f0f4f9; /* gemini-gray-100 */
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c2c8d0; /* gemini-gray-300 */
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a3acb9; /* gemini-gray-400 */
+}

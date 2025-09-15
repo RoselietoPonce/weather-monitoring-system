@@ -1,103 +1,312 @@
- │    23 + router.beforeEach((to, from, next) => {                                                                                           │
- │    24 +   const requiresAuth = to.matched.some(record => record.meta.requiresAuth)                                                        │
- │    25 +   const isAuthenticated = auth.currentUser                                                                                        │
- │    26 +                                                                                                                                   │
- │    27 +   if (requiresAuth && !isAuthenticated) {                                                                                         │
- │    28 +     next({ name: 'login' })                                                                                                       │
- │    29 +   } else if (!requiresAuth && isAuthenticated && to.name === 'login') {                                                           │
- │    30 +     next({ name: 'dashboard' })                                                                                                   │
- │    31 +   }                                                                                                                               │
- │    32 +   else {                                                                                                                          │
- │    33 +     next()                                                                                                                        │
- │    34 +   }                                                                                                                               │
- │    35 + })                                                                                                                                │
- │    36 +                                                                                                                                   │
- │    37   export default router                                                                                                             │
- ╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 
-╭────────────────────────────────────────────────────╮
-│  > tell me what to do and I will do the execution  │
-╰────────────────────────────────────────────────────╯
+  // A computed property to ensure data is always in the correct format
+  const processedChartData = computed(() => ({
+    labels: props.chartData.labels || [],
+    datasets: props.chartData.datasets.map(ds => ({
+      ...ds,
+      data: ds.data.map(v => Number(v) || 0),
+    })),
+  }));
+  </script>
 
-✕ [API Error: got status: UNAVAILABLE. {"error":{"code":503,"message":"The model is overloaded. Please try again 
-  later.","status":"UNAVAILABLE"}}]
-
-
-╭────────────────────────────────────────────────────╮
-│  > tell me what to do and I will do the execution  │
-╰────────────────────────────────────────────────────╯
-
-✦ Of course. Please replace the entire content of the file dashboard/weather-dashboard/src/router/index.js with the following code.
-
-
-  This code will:
-  1.  Add meta: { requiresAuth: true } to the dashboard route to mark it as a protected page.
-  2.  Implement a global navigation guard (router.beforeEach) that checks if a user is logged in before allowing access to protected pages.
-
-
-  Here is the code to use:
-
-
-  `javascript
-  import { createRouter, createWebHistory } from 'vue-router'
-  import HomeView from '../views/HomeView.vue'
-  import LoginView from '../views/LoginView.vue'
-  import { auth } from '@/firebase.js'
-
-  const router = createRouter({
-    history: createWebHistory(import.meta.env.BASE_URL),
-    routes: [
-      {
-        path: '/',
-        name: 'login',
-        component: LoginView
-      },
-      {
-        path: '/dashboard',
-        name: 'dashboard',
-        component: HomeView,
-        meta: { requiresAuth: true }
-      }
-    ]
-  })
-
-  router.beforeEach((to, from, next) => {
-    const requiresAuth = to.matched.some(record => record.meta.requiresAuth)
-    const isAuthenticated = auth.currentUser
-
-    if (requiresAuth && !isAuthenticated) {
-      next({ name: 'login' })
-    } else if (!requiresAuth && isAuthenticated && to.name === 'login') {
-      next({ name: 'dashboard' })
-    }
-    else {
-      next()
-    }
-  })
-
-  export default router
+  <template>
+    <div class="relative h-[400px]">
+      <div
+        v-if="isLoading"
+        class="absolute inset-0 flex items-center justify-center bg-white/50 backdrop-blur-sm rounded-xl z-10"
+      >
+        <div class="animate-pulse text-gray-600">Loading data...</div>
+      </div>
+      <!-- The chart now uses the 'processedChartData' computed property -->
+      <Line v-if="!isLoading" :data="processedChartData" :options="chartOptions" />
+    </div>
+  </template>
   `
 
-╭─────────────────╮
-│  > whats next?  │
-╰─────────────────╯
 
-✦ Excellent. The route guard is now in place.
+  After you have replaced the code in WeatherChart.vue, I will provide the code for the parent, ChartsView.vue.
 
-
-  The next logical step is to provide a way for users to log out. A common place for a logout button is in the navigation bar.
+╭──────────────────╮
+│  > lets provide  │
+╰──────────────────╯
 
 
-  Here's the plan:
-  1.  I'll examine App.vue to see how the main layout and navigation components are structured.
-  2.  Then, I'll inspect components/Navbar.vue to determine the best place to add a logout button.
-  3.  Finally, I'll provide you with the code to add the button and implement the Firebase sign-out functionality.
+ℹRequest cancelled.
+ 
+
+╭──────────────────╮
+│  > lets proceed  │
+╰──────────────────╯
+
+✦ Excellent. Now that WeatherChart.vue is a "dumb" component that accepts props, we can update the parent view, ChartsView.vue, to handle the
+  data fetching and apply the v-memo optimization.
+
+  ### Step 2: Update ChartsView.vue
 
 
-  I'll start by reading App.vue and Navbar.vue.
+  Please replace the entire content of dashboard/weather-dashboard/src/views/ChartsView.vue with the code below.
+
+
+  `html
+  <template>
+    <div class="p-4 sm:p-6 lg:p-8 font-sans">
+      <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <div class="mb-8">
+          <h1 class="text-3xl font-bold text-gray-800">Charts & Trends</h1>
+          <p class="text-gray-600 mt-1">View historical graphs of weather parameters.</p>
+        </div>
+
+        <!-- Control Panel -->
+        <div class="bg-white rounded-2xl shadow-md p-6 mb-8">
+          <div class="flex items-center justify-between">
+            <h3 class="text-lg font-medium text-gray-800">Data Time Range</h3>
+            <select
+              v-model="selectedTimeRange"
+              :disabled="isLoading"
+              class="bg-gray-50 border border-gray-300 rounded-lg py-2 px-3 text-sm text-gray-700 focus:outline-none focus:ring-2
+  focus:ring-blue-500 transition"
+            >
+              <option value="last7">Last 7 Readings</option>
+              <option value="weekly">Weekly</option>
+              <option value="monthly">Monthly</option>
+              <option value="yearly">Yearly</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Chart Display -->
+        <div class="bg-white rounded-2xl shadow-md p-6">
+          <!--
+            OPTIMIZATION: v-memo
+            This tells Vue to only re-render the WeatherChart component if the
+            'processedChartData' object or the 'isLoading' flag has changed.
+            This prevents re-renders from other reactive changes on this page.
+          -->
+          <div v-memo="[processedChartData, isLoading]">
+            <WeatherChart :chart-data="processedChartData" :is-loading="isLoading" />
+          </div>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <script setup>
+  import { ref, onUnmounted, watch, computed } from 'vue';
+  import { rtdb } from '@/firebase.js';
+  import {
+    ref as dbRef,
+    onValue,
+    off,
+    query,
+    limitToLast,
+    orderByChild,
+    startAt,
+  } from 'firebase/database';
+  import WeatherChart from '@/components/WeatherChart.vue';
+
+  // --- STATE ---
+  const isLoading = ref(true);
+  const selectedTimeRange = ref('last7');
+  let unsubscribeRef = null;
+
+  const chartData = ref({
+    labels: [],
+    datasets: [
+      {
+        label: 'Temperature (°C)',
+        borderColor: 'rgba(239, 68, 68, 1)',
+        backgroundColor: 'rgba(239, 68, 68, 0.2)',
+        data: [],
+        borderWidth: 2,
+        tension: 0.4,
+        yAxisID: 'y',
+      },
+      {
+        label: 'Humidity (%)',
+        borderColor: 'rgba(59, 130, 246, 1)',
+        backgroundColor: 'rgba(59, 130, 246, 0.2)',
+        data: [],
+        borderWidth: 2,
+        tension: 0.4,
+        yAxisID: 'y1',
+      },
+      {
+        label: 'Rainfall (mm)',
+        borderColor: 'rgba(99, 102, 241, 1)',
+        backgroundColor: 'rgba(99, 102, 241, 0.2)',
+        data: [],
+        borderWidth: 2,
+        tension: 0.4,
+        yAxisID: 'y2',
+      },
+    ],
+  });
+
+  // A computed property to ensure data is always in the correct format
+  const processedChartData = computed(() => ({
+    labels: chartData.value.labels,
+    datasets: chartData.value.datasets.map(ds => ({
+      ...ds,
+      data: ds.data.map(v => Number(v) || 0),
+    })),
+  }));
+
+
+  // --- HELPERS ---
+  const TIME_RANGES = {
+    LAST_7: 'last7',
+    WEEKLY: 'weekly',
+    MONTHLY: 'monthly',
+    YEARLY: 'yearly',
+  };
+
+  const DAYS_IN_RANGE = {
+    [TIME_RANGES.LAST_7]: 7,
+    [TIME_RANGES.WEEKLY]: 7,
+    [TIME_RANGES.MONTHLY]: 30,
+    [TIME_RANGES.YEARLY]: 365,
+  };
+
+  const formatTimestamp = (date, range) => {
+    switch (range) {
+      case TIME_RANGES.LAST_7:
+        return date.toLocaleString([], { hour: '2-digit', minute: '2-digit' });
+      case TIME_RANGES.WEEKLY:
+        return date.toLocaleString([], { weekday: 'short', month: 'short', day: 'numeric' });
+      case TIME_RANGES.MONTHLY:
+        return date.toLocaleString([], { month: 'short', day: 'numeric' });
+      case TIME_RANGES.YEARLY:
+        return date.toLocaleString([], { month: 'long' });
+      default:
+        return date.toLocaleString();
+    }
+  };
+
+  const processRecords = (records, range) => {
+    if (range === TIME_RANGES.LAST_7) {
+      const labels = records.map(r => formatTimestamp(new Date(r.timestamp), range));
+      const temp = records.map(r => Number(r.temperature) || 0);
+      const hum = records.map(r => Number(r.humidity) || 0);
+      const rain = records.map(r => Number(r.rainfall) || 0);
+      return { labels, temp, hum, rain };
+    }
+
+    const groupedData = records.reduce((acc, record) => {
+      const date = new Date(record.timestamp);
+      let key;
+      if (range === TIME_RANGES.YEARLY) {
+        key = ${date.getFullYear()}-${date.getMonth()};
+      } else {
+        key = ${date.getFullYear()}-${date.getMonth()}-${date.getDate()};
+      }
+      if (!acc[key]) {
+        acc[key] = { timestamp: date, temps: [], hums: [], rains: [], count: 0 };
+      }
+      acc[key].temps.push(Number(record.temperature) || 0);
+      acc[key].hums.push(Number(record.humidity) || 0);
+      acc[key].rains.push(Number(record.rainfall) || 0);
+      acc[key].count++;
+      return acc;
+    }, {});
+
+    const sortedGroups = Object.values(groupedData).sort((a, b) => a.timestamp - b.timestamp);
+    const labels = [], temp = [], hum = [], rain = [];
+
+    sortedGroups.forEach(group => {
+      labels.push(formatTimestamp(group.timestamp, range));
+      temp.push(group.temps.reduce((a, b) => a + b, 0) / group.count);
+      hum.push(group.hums.reduce((a, b) => a + b, 0) / group.count);
+      rain.push(group.rains.reduce((a, b) => a + b, 0) / group.count);
+    });
+
+    return { labels, temp, hum, rain };
+  };
+
+
+  // --- FIREBASE LISTENER ---
+  const listenForHistoricalData = () => {
+    isLoading.value = true;
+    if (unsubscribeRef) off(unsubscribeRef);
+
+    const historyRef = dbRef(rtdb, 'sensor_logs');
+    const range = selectedTimeRange.value;
+    let historyQuery;
+
+    if (range === TIME_RANGES.LAST_7) {
+      historyQuery = query(historyRef, orderByChild('timestamp'), limitToLast(7));
+    } else {
+      const startTime = Date.now() - DAYS_IN_RANGE[range] * 86400000;
+      historyQuery = query(historyRef, orderByChild('timestamp'), startAt(startTime));
+    }
+
+    unsubscribeRef = historyRef; // Keep ref for cleanup
+
+    onValue(historyQuery, (snap) => {
+      if (!snap.exists()) {
+        chartData.value.labels = [];
+        chartData.value.datasets.forEach(ds => ds.data = []);
+      } else {
+        const records = Object.values(snap.val());
+        const { labels, temp, hum, rain } = processRecords(records, range);
+        chartData.value = {
+          labels,
+          datasets: [
+            { ...chartData.value.datasets[0], data: temp },
+            { ...chartData.value.datasets[1], data: hum },
+            { ...chartData.value.datasets[2], data: rain },
+          ],
+        };
+      }
+      isLoading.value = false;
+    }, (error) => {
+      console.error('Firebase onValue error:', error);
+      isLoading.value = false;
+    });
+  };
+
+
+  // --- LIFECYCLE ---
+  watch(selectedTimeRange, listenForHistoricalData, { immediate: true });
+
+  onUnmounted(() => {
+    if (unsubscribeRef) off(unsubscribeRef);
+  });
+  </script>
+  `
+
+  ### Summary of Changes
+
+
+   1. Data Logic Moved: All the state, Firebase listeners, and helper functions for processing data now live in ChartsView.vue.
+  You now have a much more robust and performant charting page that follows Vue best practices.
+
+ℹUser cancelled the request.
+ 
+
+╭─────────────────────────────────────────────────╮
+│  > <template>    <div class="p-4 sm:p-6 lg:p-8  │
+│                                                 │
+│    <template>    <div class="p-4 sm:p-6 lg:p-8  │
+│                                                 │
+│    <template>    <div class="p-4 sm:p-6 lg:p-8  │
+│                                                 │
+│    <template>    <div class="p-4 sm:p-6 lg:p-8  │
+│                                                 │
+│    <template>    <div class="p-4 sm:p-6 lg:p-8  │
+│                                                 │
+│    <template>    <div class="p-4 sm:p-6 lg:p-8  │
+│                                                 │
+│    <template>    <div class="p-4 sm:p-6 lg:p-8  │
+│                                                 │
+│    <template>    <div class="p-4 sm:p-6 lg:p-8  │
+╰─────────────────────────────────────────────────╯
+
+✕ [API Error: exception TypeError: fetch failed sending request]
+
  ╭───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
  │ ✓  ReadManyFiles Will attempt to read and concatenate files using patterns:                                                               │
- │    dashboard/weather-dashboard/src/App.vue`, `dashboard/weather-dashboard/src/components/Navbar.vue                                       │
+ │    dashboard/weather-dashboard/src/components/WeatherChart.vue`, `dashboard/weather-dashboard/src/views/ChartsView.vue                    │
  │     (within target directory:                                                                                                             │
  │    C:\Users\PC\Desktop\weather-monitoring-system                                                                                          │
  │    ) . Excluding: patterns like                                                                                                           │
@@ -108,163 +317,341 @@
  │    Successfully read and concatenated content from **2 file(s)**.                                                                         │
  │                                                                                                                                           │
  │    **Processed Files:**                                                                                                                   │
- │    - `dashboard/weather-dashboard/src/App.vue`                                                                                            │
- │    - `dashboard/weather-dashboard/src/components/Navbar.vue`                                                                              │
- ╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-✦ 
-  It looks like the logout functionality is already fully implemented in Navbar.vue and App.vue correctly shows the navbar only when a user
-  is logged in.
-
-
-  The authentication flow is complete. You now have:
-  *   A working login page.
-  *   Protected routes that require authentication.
-  *   A working sign-out button.
-
-
-  You can now run the application and test the full authentication process. What would you like to do next?
-
-ℹRequest cancelled.
- 
-
-╭────────────────────╮
-│  > check all this  │
-╰────────────────────╯
-
-
-ℹRequest cancelled.
- 
- ╭───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
- │ ✓  ReadManyFiles Will attempt to read and concatenate files using patterns:…                                                              │
- │                                                                                                                                           │
- │                                                                                                                                           │
- │    ### ReadManyFiles Result (Target Dir: `C:\Users\PC\Desktop\weather-monitoring-system`)                                                 │
- │                                                                                                                                           │
- │    Successfully read and concatenated content from **4 file(s)**.                                                                         │
- │                                                                                                                                           │
- │    **Processed Files:**                                                                                                                   │
- │    - `dashboard/weather-dashboard/src/components/WeatherCards.vue`                                                                        │
  │    - `dashboard/weather-dashboard/src/components/WeatherChart.vue`                                                                        │
- │    - `dashboard/weather-dashboard/src/components/WeatherMap.vue`                                                                          │
- │    - `dashboard/weather-dashboard/src/views/HomeView.vue`                                                                                 │
+ │    - `dashboard/weather-dashboard/src/views/ChartsView.vue`                                                                               │
  ╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 
-╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│  > check all this @dashboard/weather-dashboard/src/components/WeatherCards.vue                                               │
-│    @dashboard/weather-dashboard/src/components/WeatherChart.vue @dashboard/weather-dashboard/src/components/WeatherMap.vue   │
-│    @dashboard/weather-dashboard/src/views/HomeView.vue                                                                       │
-╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭───────────────────────────────────────────────────────────────────────────────────────────╮
+│  > check my old code first @dashboard/weather-dashboard/src/components/WeatherChart.vue   │
+│    @dashboard/weather-dashboard/src/views/ChartsView.vue                                  │
+╰───────────────────────────────────────────────────────────────────────────────────────────╯
 
-✦ I've reviewed these files. As I mentioned before, the code is well-structured and functional.
-
-
-  To recap:
+✦ Of course. I have reviewed the original code for both WeatherChart.vue and ChartsView.vue. My previous explanation for refactoring them is
+  correct. The WeatherChart.component is doing all the work, and the ChartsView is just a simple wrapper.
 
 
-   * `HomeView.vue`: The main container, fetches and distributes data.
-  What would you like to do with these components? Are there any changes or new features you have in mind?
-
-╭───────────────────────────────────────────────────────────────╮
-│  > why does my map plot in new york when I load the browser?  │
-╰───────────────────────────────────────────────────────────────╯
-
-✦ That's a great question. The map is likely defaulting to a location in or near New York because the initial coordinates in your
-  HomeView.vue component are hardcoded to [40.7128, -74.0060], which is the location of New York City.
+  To implement v-memo effectively, we need to lift the state and data-fetching logic from the child (WeatherChart) to the parent
+  (ChartsView).
 
 
-  Let me read the HomeView.vue file to confirm this.
- ╭───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
- │ ✓  ReadFile dashboard\src\views\HomeView.vue                                                                                              │
- ╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-✦ My apologies, I was mistaken. The coordinates are currently set to [7.99795, 124.25324]. While this isn't New York, the issue remains the
-  same: the map is displaying a hardcoded location before the data from Firebase has had a chance to load.
+  Here is the complete, refactored code for both files.
+
+  ### Step 1: Replace WeatherChart.vue
 
 
-  When the HomeView component is first created, mapCenter and markerLatLng are initialized with those default values. The map is rendered
-  immediately with these coordinates. In the meantime, Firebase is fetching the latest data in the background. Once the data arrives, the
-  updateDeviceLocation function is called, and the map's location is updated. This delay is what causes you to briefly see the initial
-  hardcoded location.
-
-
-  To fix this, I can do the following:
-
-
-   1. Prevent the map from rendering until the location data is loaded: I'll add a v-if to the <WeatherMap> component in HomeView.vue to
-      ensure it only renders after the first data load from Firebase is complete.
-  I will now modify dashboard/weather-dashboard/src/views/HomeView.vue to implement this.
- ╭───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
- │ ✓  Edit dashboard\src\views\HomeView.vue: <script setup>... => <script setup>...                                                          │
- │                                                                                                                                           │
- │    13   const humidity = vueRef('N/A');                                                                                                   │
- │    14   const rainfall = vueRef('N/A');                                                                                                   │
- │    15   const isLoading = vueRef(false);                                                                                                  │
- │    16 - const mapCenter = vueRef([7.99795, 124.25324]);                                                                                   │
- │    17 - const markerLatLng = vueRef([7.99795, 124.25324]);                                                                                │
- │    16 + const mapCenter = vueRef(null);                                                                                                   │
- │    17 + const markerLatLng = vueRef(null);                                                                                                │
- │    18   const deviceAddress = vueRef('Weather Station Location');                                                                         │
- │    19   const lastUpdated = vueRef(null);                                                                                                 │
- │    20   let unsubscribeLatest;                                                                                                            │
- ╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
- ╭───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
- │ x  Edit {"new_string":"        <WeatherMap\n          v-if=\"mapCenter && markerLatLng\"\n          :map-center=\"mapCenter\"\n        …  │
- │                                                                                                                                           │
- │    File path must be within one of the workspace directories: C:\Users\PC\Desktop\weather-monitoring-system                               │
- ╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-✦ I
-✕ [API Error: got status: UNAVAILABLE. {"error":{"code":503,"message":"The model is overloaded. Please try again 
-  later.","status":"UNAVAILABLE"}}]
-
-
-╭───────────────────────────────────────────────────────────╮
-│  > continue, just instruct me and I will do the excution  │
-╰───────────────────────────────────────────────────────────╯
-
-✕ [API Error: got status: UNAVAILABLE. {"error":{"code":503,"message":"The model is overloaded. Please try again 
-  later.","status":"UNAVAILABLE"}}]
-
-
-╭────────────────────────────────────────────────────────────╮
-│  > continue, just instruct me and I will do the execution  │
-╰────────────────────────────────────────────────────────────╯
-
-✦ Of course. Please make the following change to the <template> section of dashboard/weather-dashboard/src/views/HomeView.vue.
-
-
-  This change will add a v-if="mapCenter && markerLatLng" directive to the <WeatherMap> component. This ensures that the map will only be
-  rendered after the location data has been loaded from Firebase, preventing the map from briefly showing the default location.
-
-  Replace this code:
+  Replace the entire content of dashboard/weather-dashboard/src/components/WeatherChart.vue with this code. This version only receives props
+  and displays the chart.
 
 
   `html
-          <WeatherMap
-            :map-center="mapCenter"
-            :marker-lat-lng="markerLatLng"
-            :device-address="deviceAddress"
-            :temperature="temperature"
-            :humidity="humidity"
-            :rainfall="rainfall"
-          />
+  <script setup>
+  import { computed } from 'vue';
+  import { Line } from 'vue-chartjs';
+  import {
+    Chart as ChartJS,
+    CategoryScale,
+    LinearScale,
+    PointElement,
+    LineElement,
+    Title,
+    Tooltip,
+    Legend,
+    Decimation,
+  } from 'chart.js';
+
+  // Register Chart.js plugins
+  ChartJS.register(
+    CategoryScale,
+    LinearScale,
+    PointElement,
+    LineElement,
+    Title,
+    Tooltip,
+    Legend,
+    Decimation
+  );
+
+  // Define props to accept data from the parent
+  const props = defineProps({
+    chartData: {
+      type: Object,
+      required: true,
+    },
+    isLoading: {
+      type: Boolean,
+      default: false,
+    },
+  });
+
+  // The chart options remain the same
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: { mode: 'nearest', axis: 'x', intersect: false },
+    plugins: {
+      legend: { position: 'top', labels: { usePointStyle: true, padding: 20 } },
+      tooltip: {
+        mode: 'index',
+        intersect: false,
+        callbacks: {
+          label: (ctx) =>
+            `${ctx.dataset.label}: ${
+              ctx.parsed.y != null ? ctx.parsed.y.toFixed(1) : 0
+            }`,
+        },
+      },
+    },
+    scales: {
+      x: { ticks: { autoSkip: true, maxRotation: 45, minRotation: 45 } },
+      y: {
+        type: 'linear',
+        display: true,
+        position: 'left',
+        title: { display: true, text: 'Temperature (°C)' },
+        ticks: { callback: (v) => ${v}°C },
+      },
+      y1: {
+        type: 'linear',
+        display: true,
+        position: 'right',
+        grid: { drawOnChartArea: false },
+        title: { display: true, text: 'Humidity (%)' },
+        ticks: { callback: (v) => ${v}% },
+      },
+      y2: {
+        type: 'linear',
+        display: true,
+        position: 'right',
+        grid: { drawOnChartArea: false },
+        title: { display: true, text: 'Rainfall (mm)' },
+        ticks: { callback: (v) => ${v}mm },
+      },
+    },
+  };
+
+  // A computed property to ensure data is always in the correct format
+  const processedChartData = computed(() => ({
+    labels: props.chartData.labels || [],
+    datasets: props.chartData.datasets.map(ds => ({
+      ...ds,
+      data: ds.data.map(v => Number(v) || 0),
+    })),
+  }));
+  </script>
+
+  <template>
+    <div class="relative h-[400px]">
+      <div
+        v-if="isLoading"
+        class="absolute inset-0 flex items-center justify-center bg-white/50 backdrop-blur-sm rounded-xl z-10"
+      >
+        <div class="animate-pulse text-gray-600">Loading data...</div>
+      </div>
+      <!-- The chart now uses the 'processedChartData' computed property -->
+      <Line v-if="!isLoading" :data="processedChartData" :options="chartOptions" />
+    </div>
+  </template>
   `
 
-  With this code:
+
+  Step 2: Replace ChartsView.vue
+  Now, replace the entire content of dashboard/weather-dashboard/src/views/ChartsView.vue with this code. This version handles the data and
+  uses v-memo.
 
 
   `html
-          <WeatherMap
-            v-if="mapCenter && markerLatLng"
-            :map-center="mapCenter"
-            :marker-lat-lng="markerLatLng"
-            :device-address="deviceAddress"
-            :temperature="temperature"
-            :humidity="humidity"
-            :rainfall="rainfall"
-          />
+  <template>
+    <div class="p-4 sm:p-6 lg:p-8 font-sans">
+      <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <div class="mb-8">
+          <h1 class="text-3xl font-bold text-gray-800">Charts & Trends</h1>
+          <p class="text-gray-600 mt-1">View historical graphs of weather parameters.</p>
+        </div>
+
+        <!-- Control Panel -->
+        <div class="bg-white rounded-2xl shadow-md p-6 mb-8">
+          <div class="flex items-center justify-between">
+            <h3 class="text-lg font-medium text-gray-800">Data Time Range</h3>
+            <select
+              v-model="selectedTimeRange"
+              :disabled="isLoading"
+              class="bg-gray-50 border border-gray-300 rounded-lg py-2 px-3 text-sm text-gray-700 focus:outline-none focus:ring-2
+  focus:ring-blue-500 transition"
+            >
+              <option value="last7">Last 7 Readings</option>
+              <option value="weekly">Weekly</option>
+              <option value="monthly">Monthly</option>
+              <option value="yearly">Yearly</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Chart Display -->
+        <div class="bg-white rounded-2xl shadow-md p-6">
+          <!--
+            OPTIMIZATION: v-memo
+            This tells Vue to only re-render the WeatherChart component if the
+            'processedChartData' object or the 'isLoading' flag has changed.
+          -->
+          <div v-memo="[processedChartData, isLoading]">
+            <WeatherChart :chart-data="processedChartData" :is-loading="isLoading" />
+          </div>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <script setup>
+  import { ref, onUnmounted, watch, computed } from 'vue';
+  import { rtdb } from '@/firebase.js';
+  import {
+    ref as dbRef,
+    onValue,
+    off,
+    query,
+    limitToLast,
+    orderByChild,
+    startAt,
+  } from 'firebase/database';
+  import WeatherChart from '@/components/WeatherChart.vue';
+
+  // --- STATE ---
+  const isLoading = ref(true);
+  const selectedTimeRange = ref('last7');
+  let unsubscribeRef = null;
+
+  const chartData = ref({
+    labels: [],
+    datasets: [
+      {
+        label: 'Temperature (°C)',
+        borderColor: 'rgba(239, 68, 68, 1)',
+        backgroundColor: 'rgba(239, 68, 68, 0.2)',
+        data: [],
+        borderWidth: 2,
+        tension: 0.4,
+        yAxisID: 'y',
+      },
+      {
+        label: 'Humidity (%)',
+        borderColor: 'rgba(59, 130, 246, 1)',
+        backgroundColor: 'rgba(59, 130, 246, 0.2)',
+        data: [],
+        borderWidth: 2,
+        tension: 0.4,
+        yAxisID: 'y1',
+      },
+      {
+        label: 'Rainfall (mm)',
+        borderColor: 'rgba(99, 102, 241, 1)',
+        backgroundColor: 'rgba(99, 102, 241, 0.2)',
+        data: [],
+        borderWidth: 2,
+        tension: 0.4,
+        yAxisID: 'y2',
+      },
+    ],
+  });
+
+  const processedChartData = computed(() => ({
+    labels: chartData.value.labels,
+    datasets: chartData.value.datasets.map(ds => ({
+      ...ds,
+      data: ds.data.map(v => Number(v) || 0),
+    })),
+  }));
+
+
+  // --- HELPERS ---
+  const TIME_RANGES = { LAST_7: 'last7', WEEKLY: 'weekly', MONTHLY: 'monthly', YEARLY: 'yearly' };
+  const DAYS_IN_RANGE = { [TIME_RANGES.LAST_7]: 7, [TIME_RANGES.WEEKLY]: 7, [TIME_RANGES.MONTHLY]: 30, [TIME_RANGES.YEARLY]: 365 };
+
+  const formatTimestamp = (date, range) => {
+    switch (range) {
+      case TIME_RANGES.LAST_7: return date.toLocaleString([], { hour: '2-digit', minute: '2-digit' });
+      case TIME_RANGES.WEEKLY: return date.toLocaleString([], { weekday: 'short', month: 'short', day: 'numeric' });
+      case TIME_RANGES.MONTHLY: return date.toLocaleString([], { month: 'short', day: 'numeric' });
+      case TIME_RANGES.YEARLY: return date.toLocaleString([], { month: 'long' });
+      default: return date.toLocaleString();
+    }
+  };
+
+  const processRecords = (records, range) => {
+    if (range === TIME_RANGES.LAST_7) {
+      return {
+        labels: records.map(r => formatTimestamp(new Date(r.timestamp), range)),
+        temp: records.map(r => Number(r.temperature) || 0),
+        hum: records.map(r => Number(r.humidity) || 0),
+        rain: records.map(r => Number(r.rainfall) || 0),
+      };
+    }
+    const groupedData = records.reduce((acc, record) => {
+      const date = new Date(record.timestamp);
+      const key = range === TIME_RANGES.YEARLY ? ${date.getFullYear()}-${date.getMonth()} :
+  ${date.getFullYear()}-${date.getMonth()}-${date.getDate()};
+      if (!acc[key]) acc[key] = { timestamp: date, temps: [], hums: [], rains: [], count: 0 };
+      acc[key].temps.push(Number(record.temperature) || 0);
+      acc[key].hums.push(Number(record.humidity) || 0);
+      acc[key].rains.push(Number(record.rainfall) || 0);
+      acc[key].count++;
+      return acc;
+    }, {});
+    const sortedGroups = Object.values(groupedData).sort((a, b) => a.timestamp - b.timestamp);
+    const labels = [], temp = [], hum = [], rain = [];
+    sortedGroups.forEach(g => {
+      labels.push(formatTimestamp(g.timestamp, range));
+      temp.push(g.temps.reduce((a, b) => a + b, 0) / g.count);
+      hum.push(g.hums.reduce((a, b) => a + b, 0) / g.count);
+      rain.push(g.rains.reduce((a, b) => a + b, 0) / g.count);
+    });
+    return { labels, temp, hum, rain };
+  };
+
+  // --- FIREBASE LISTENER ---
+  const listenForHistoricalData = () => {
+    isLoading.value = true;
+    if (unsubscribeRef) off(unsubscribeRef);
+    const historyRef = dbRef(rtdb, 'sensor_logs');
+    const range = selectedTimeRange.value;
+    let historyQuery;
+    if (range === TIME_RANGES.LAST_7) {
+      historyQuery = query(historyRef, orderByChild('timestamp'), limitToLast(7));
+    } else {
+      const startTime = Date.now() - DAYS_IN_RANGE[range] * 86400000;
+      historyQuery = query(historyRef, orderByChild('timestamp'), startAt(startTime));
+    }
+    unsubscribeRef = historyRef;
+    onValue(historyQuery, (snap) => {
+      if (!snap.exists()) {
+        chartData.value.labels = [];
+        chartData.value.datasets.forEach(ds => ds.data = []);
+      } else {
+        const { labels, temp, hum, rain } = processRecords(Object.values(snap.val()), range);
+        chartData.value = {
+          labels,
+          datasets: [
+            { ...chartData.value.datasets[0], data: temp },
+            { ...chartData.value.datasets[1], data: hum },
+            { ...chartData.value.datasets[2], data: rain },
+          ],
+        };
+      }
+      isLoading.value = false;
+    }, (error) => {
+      console.error('Firebase onValue error:', error);
+      isLoading.value = false;
+    });
+  };
+
+  // --- LIFECYCLE ---
+  watch(selectedTimeRange, listenForHistoricalData, { immediate: true });
+  onUnmounted(() => { if (unsubscribeRef) off(unsubscribeRef); });
+  </script>
   `
  ╭───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
  │ ✓  ReadManyFiles Will attempt to read and concatenate files using patterns:                                                               │
- │    dashboard/weather-dashboard/src/views/HomeView.vue                                                                                     │
+ │    dashboard/weather-dashboard/src/components/WeatherChart.vue`, `dashboard/weather-dashboard/src/views/ChartsView.vue                    │
  │     (within target directory:                                                                                                             │
  │    C:\Users\PC\Desktop\weather-monitoring-system                                                                                          │
  │    ) . Excluding: patterns like                                                                                                           │
@@ -272,738 +659,349 @@
  │                                                                                                                                           │
  │    ### ReadManyFiles Result (Target Dir: `C:\Users\PC\Desktop\weather-monitoring-system`)                                                 │
  │                                                                                                                                           │
- │    Successfully read and concatenated content from **1 file(s)**.                                                                         │
+ │    Successfully read and concatenated content from **2 file(s)**.                                                                         │
  │                                                                                                                                           │
  │    **Processed Files:**                                                                                                                   │
- │    - `dashboard/weather-dashboard/src/views/HomeView.vue`                                                                                 │
+ │    - `dashboard/weather-dashboard/src/components/WeatherChart.vue`                                                                        │
+ │    - `dashboard/weather-dashboard/src/views/ChartsView.vue`                                                                               │
  ╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 
-╭─────────────────────────────────────────────────────────────────────╮
-│  > check again @dashboard/weather-dashboard/src/views/HomeView.vue  │
-╰─────────────────────────────────────────────────────────────────────╯
+╭───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│  > check it again @dashboard/weather-dashboard/src/components/WeatherChart.vue @dashboard/weather-dashboard/src/views/ChartsView.vue  │
+╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 
-✦ I've reviewed the file, and it appears the changes I suggested haven't been applied yet. The map coordinates are still hardcoded, and the
-  <WeatherMap> component is missing the v-if directive.
+✦ Excellent. I have reviewed the new code for both WeatherChart.vue and ChartsView.vue, and the implementation is perfect.
 
-
-  No problem, let's try this again in two steps.
-
-  Step 1: Update the script
+  You have successfully refactored the components:
 
 
-  Please replace the <script setup> section of dashboard/weather-dashboard/src/views/HomeView.vue with the following. This will initialize
-  the map coordinates as null.
-
-
-  `javascript
-  <script setup>
-  import { ref as vueRef, onMounted, onUnmounted, computed } from 'vue';
-  import { db } from '@/firebase.js';
-  import { ref as dbRef, onValue } from 'firebase/database';
-
-  // Import the new child components
-  import WeatherCards from '@/components/WeatherCards.vue';
-  import WeatherChart from '@/components/WeatherChart.vue';
-  import WeatherMap from '@/components/WeatherMap.vue';
-
-  // State Management
-  const temperature = vueRef('N/A');
-  const humidity = vueRef('N/A');
-  const rainfall = vueRef('N/A');
-  const isLoading = vueRef(false);
-  const mapCenter = vueRef(null);
-  const markerLatLng = vueRef(null);
-  const deviceAddress = vueRef('Weather Station Location');
-  const lastUpdated = vueRef(null);
-  let unsubscribeLatest;
-
-  const isOnline = computed(() => {
-    if (!lastUpdated.value) return false;
-    // Assumes a 30-second window for "online" status
-    const now = Date.now();
-    return now - lastUpdated.value < 30000;
-  });
-
-  // Data for WeatherCards component
-  const weatherData = [
-    {
-      id: 'temp',
-      title: 'Temperature',
-      value: temperature,
-      unit: '°C',
-      icon: 'ph:thermometer-cold-bold',
-      color: 'text-red-500',
-      bgColor: 'bg-red-100'
-    },
-    {
-      id: 'humidity',
-      title: 'Humidity',
-      value: humidity,
-      unit: '%',
-      icon: 'ph:drop-bold',
-      color: 'text-blue-500',
-      bgColor: 'bg-blue-100'
-    },
-    {
-      id: 'rainfall',
-      title: 'Rainfall',
-      value: rainfall,
-      unit: 'mm',
-      icon: 'ph:cloud-rain-bold',
-      color: 'text-indigo-500',
-      bgColor: 'bg-indigo-100'
-    },
-  ];
-
-  // Location Update Handler
-  const updateDeviceLocation = (data) => {
-    try {
-      if (data.location) {
-        const { lat, lng, address } = data.location;
-        if (lat && lng) {
-          mapCenter.value = [lat, lng];
-          markerLatLng.value = [lat, lng];
-          deviceAddress.value = address || 'Weather Station Location';
-        }
-      }
-    } catch (error) {
-      console.error('Error updating device location:', error);
-    }
-  };
-
-  onMounted(() => {
-    isLoading.value = true;
-    try {
-      const latestDataRef = dbRef(db, 'sensor_data/latest');
-      unsubscribeLatest = onValue(latestDataRef, (snapshot) => {
-        const data = snapshot.val();
-        if (data) {
-          temperature.value = data.temperature?.toFixed(1) || 'N/A';
-          humidity.value = data.humidity?.toFixed(0) || 'N/A';
-          rainfall.value = data.rainfall?.toFixed(1) || 'N/A';
-          lastUpdated.value = Date.now();
-          updateDeviceLocation(data);
-        }
-        isLoading.value = false;
-      });
-    } catch (error) {
-      console.error('Error setting up data listeners:', error);
-      isLoading.value = false;
-    }
-  });
-
-  onUnmounted(() => {
-    if (unsubscribeLatest) unsubscribeLatest();
-  });
-  </script>
-  `
-
-
-  Let me know when you've done that, and I'll give you the code for the second step.
-
-╭──────────────────╮
-│  > lets proceed  │
-╰──────────────────╯
-
-✦ Great. Now for the second step.
-
-
-  Please replace the <WeatherMap> component in the <template> section of dashboard/weather-dashboard/src/views/HomeView.vue with the
-  following code. This will add the v-if directive to prevent the map from rendering before the location data is loaded.
-
-  Replace this:
-
-
+   1. `WeatherChart.vue` is now a clean, reusable presentation component. It correctly accepts chartData and isLoading as props and does
+      nothing else but display the chart.
   `html
-          <WeatherMap
-            :map-center="mapCenter"
-            :marker-lat-lng="markerLatLng"
-            :device-address="deviceAddress"
-            :temperature="temperature"
-            :humidity="humidity"
-            :rainfall="rainfall"
-          />
-  `
-
-  With this:
+      <div v-memo="[processedChartData, isLoading]">
+        <WeatherChart
+          :chart-data="processedChartData"
+          :is-loading="isLoading"
+        />
+      </div>
+      `
 
 
-  `html
-          <WeatherMap
-            v-if="mapCenter && markerLatLng"
-            :map-center="mapCenter"
-            :marker-lat-lng="markerLatLng"
-            :device-address="deviceAddress"
-            :temperature="temperature"
-            :humidity="humidity"
-            :rainfall="rainfall"
-          />
-  `
+  This implementation achieves our goal perfectly. The WeatherChart component will now only re-render when its essential data dependencies
+  (processedChartData or isLoading) have changed, preventing unnecessary rendering cycles and optimizing your application's performance.
 
 
-  Once you've made this change, the map should no longer briefly show the default location when the page loads.
+  This is a great example of applying Vue best practices for state management and performance. Well done.
 
-╭───────────────────────────────╮
-│  > still plotted in new york  │
-╰───────────────────────────────╯
+╭───────────────────────────────────────────────────────────────────────────────╮
+│  > when I try to access the weekly, monthly, and yearly, why its so loading?  │
+╰───────────────────────────────────────────────────────────────────────────────╯
 
-✦ I understand this is frustrating. Let's try a different approach. Instead of conditionally rendering the map, let's ensure the map
-  component itself can handle being initialized without coordinates.
-
-
-  First, let's revert the changes in HomeView.vue to how they were before we started. Then, I'll guide you through modifying WeatherMap.vue.
+✦ That's an excellent and very important observation. The long loading time you're seeing is a classic performance issue that happens when an
+  application starts handling a large amount of data.
 
 
-  Here is the original code for dashboard/weather-dashboard/src/views/HomeView.vue. Please replace the entire file content with this:
+  You've pinpointed the exact problem with the current design. Let me explain why it's happening and how we can fix it.
 
 
-  `javascript
-  <script setup>
-  import { ref as vueRef, onMounted, onUnmounted, computed } from 'vue';
-  import { db } from '@/firebase.js';
-  import { ref as dbRef, onValue } from 'firebase/database';
+  The Core Problem: Client-Side Overload
+   1. "Last 7 Readings" (Fast): When you select this option, your app sends a very efficient query to Firebase: limitToLast(7). This is like
+      telling the database, "Please do the work of finding the last 7 rows and send only those 7 to me." This is very fast because the
+      database does the heavy lifting.
+   2. "Weekly," "Monthly," "Yearly" (Slow): When you select these, your app sends a different query: startAt(a-long-time-ago). This is like
+      telling the database, "Please send me every single row from last year up to today."
+  If your sensor sends data every 10 seconds, a yearly query could be asking the database to send over 3 million data points to your browser.
+   Your browser then has to:
+  *   Download all of this massive data.
+  *   Loop through millions of items in the processRecords function to calculate the daily or monthly averages.
 
-  // Import the new child components
-  import WeatherCards from '@/components/WeatherCards.vue';
-  import WeatherChart from '@/components/WeatherChart.vue';
-  import WeatherMap from '@/components/WeatherMap.vue';
 
-  // State Management
-  const temperature = vueRef('N/A');
-  const humidity = vueRef('N/A');
-  const rainfall = vueRef('N/A');
-  const isLoading = vueRef(false);
-  const mapCenter = vueRef([7.99795, 124.25324]);
-  const markerLatLng = vueRef([7.99795, 124.25324]);
-  const deviceAddress = vueRef('Weather Station Location');
-  const lastUpdated = vueRef(null);
-  let unsubscribeLatest;
+  This is what's causing the long loading time and can even crash the browser tab. The client is being asked to do a job that the server
+  should be doing.
 
-  const isOnline = computed(() => {
-    if (!lastUpdated.value) return false;
-    // Assumes a 30-second window for "online" status
-    const now = Date.now();
-    return now - lastUpdated.value < 30000;
-  });
+  ---
 
-  // Data for WeatherCards component
-  const weatherData = [
-    {
-      id: 'temp',
-      title: 'Temperature',
-      value: temperature,
-      unit: '°C',
-      icon: 'ph:thermometer-cold-bold',
-      color: 'text-red-500',
-      bgColor: 'bg-red-100'
-    },
-    {
-      id: 'humidity',
-      title: 'Humidity',
-      value: humidity,
-      unit: '%',
-      icon: 'ph:drop-bold',
-      color: 'text-blue-500',
-      bgColor: 'bg-blue-100'
-    },
-    {
-      id: 'rainfall',
-      title: 'Rainfall',
-      value: rainfall,
-      unit: 'mm',
-      icon: 'ph:cloud-rain-bold',
-      color: 'text-indigo-500',
-      bgColor: 'bg-indigo-100'
-    },
-  ];
 
-  // Location Update Handler
-  const updateDeviceLocation = (data) => {
-    try {
-      if (data.location) {
-        const { lat, lng, address } = data.location;
-        if (lat && lng) {
-          mapCenter.value = [lat, lng];
-          markerLatLng.value = [lat, lng];
-          deviceAddress.value = address || 'Weather Station Location';
-        }
+  The Solutions
+  There are two main ways to solve this. One is a quick fix that makes a trade-off, and the other is the professional, long-term solution.
+
+  #### Solution 1: The Immediate Fix (Client-Side Limiting & Indexing)
+
+  This is the fastest way to make the app usable right now, without changing the backend.
+
+
+  A) Add a Data Index: First, you MUST tell the database to create an index on the timestamp field. Without this, even the startAt query is
+  slow.
+
+
+   1. Go to your Firebase Console.
+  `json
+  {
+    "rules": {
+      ".read": "auth != null",
+      ".write": "auth != null",
+      "sensor_logs": {
+        ".indexOn": "timestamp"
       }
-    } catch (error) {
-      console.error('Error updating device location:', error);
     }
-  };
+  }
+  `
+  Click "Publish". This is a critical performance boost.
 
-  onMounted(() => {
+
+  B) Limit the Query: We can add a limitToLast() to the less efficient queries. This won't be perfectly accurate for calculating averages
+  over a whole year, but it will make the chart load instantly.
+
+
+  Let's modify the listenForHistoricalData function in ChartsView.vue.
+
+
+  File to Edit: dashboard/weather-dashboard/src/views/ChartsView.vue
+
+  Replace the listenForHistoricalData function with this updated version:
+
+
+  `javascript
+  // --- FIREBASE LISTENER ---
+  const listenForHistoricalData = () => {
     isLoading.value = true;
-    try {
-      const latestDataRef = dbRef(db, 'sensor_data/latest');
-      unsubscribeLatest = onValue(latestDataRef, (snapshot) => {
-        const data = snapshot.val();
-        if (data) {
-          temperature.value = data.temperature?.toFixed(1) || 'N/A';
-          humidity.value = data.humidity?.toFixed(0) || 'N/A';
-          rainfall.value = data.rainfall?.toFixed(1) || 'N/A';
-          lastUpdated.value = Date.now();
-          updateDeviceLocation(data);
-        }
-        isLoading.value = false;
-      });
-    } catch (error) {
-      console.error('Error setting up data listeners:', error);
-      isLoading.value = false;
+    if (unsubscribeRef) off(unsubscribeRef);
+
+    const historyRef = dbRef(rtdb, 'sensor_logs');
+    const range = selectedTimeRange.value;
+    let historyQuery;
+
+    if (range === TIME_RANGES.LAST_7) {
+      historyQuery = query(historyRef, orderByChild('timestamp'), limitToLast(7));
+    } else {
+      const startTime = Date.now() - DAYS_IN_RANGE[range] * 86400000;
+      // --- FIX: Add a limit to prevent fetching too much data ---
+      // We fetch the last 1000 records within the selected time range.
+      // This is a balance between performance and data granularity.
+      historyQuery = query(
+        historyRef,
+        orderByChild('timestamp'),
+        startAt(startTime),
+        limitToLast(1000) // Prevents browser overload
+      );
     }
-  });
 
-  onUnmounted(() => {
-    if (unsubscribeLatest) unsubscribeLatest();
-  });
-  </script>
+    unsubscribeRef = historyRef;
 
-  <template>
-    <div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 p-4 sm:p-6 lg:p-8">
-      <div class="max-w-7xl mx-auto">
-        <div class="mb-10 text-center">
-          <h1 class="text-4xl font-bold text-gray-800 mb-2">MSU - Main Campus Weather Station</h1>
-          <p class="text-gray-600 text-lg">
-            <span :class="isOnline ? 'text-green-500' : 'text-red-500'">●</span>
-            {{ isOnline ? 'Online' : 'Offline' }}
-          </p>
-          <p v-if="lastUpdated" class="text-sm text-gray-500 mt-1">Last updated: {{ new Date(lastUpdated).toLocaleString() }}</p>
-        </div>
-
-        <WeatherCards :weather-data="weatherData" :is-loading="isLoading" />
-
-        <div class="mt-10 grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <WeatherChart />
-
-          <WeatherMap
-            :map-center="mapCenter"
-            :marker-lat-lng="markerLatLng"
-            :device-address="deviceAddress"
-            :temperature="temperature"
-            :humidity="humidity"
-            :rainfall="rainfall"
-          />
-        </div>
-      </div>
-    </div>
-  </template>
-  `
-
-
-  After you've reverted the file, I'll provide the updated code for WeatherMap.vue.
-
-╭─────────────────╮
-│  > whats next?  │
-╰─────────────────╯
-
-✦ Great. Now, let's modify the WeatherMap.vue component to handle cases where the initial coordinates are not immediately available.
-
-
-  Please replace the entire content of dashboard/weather-dashboard/src/components/WeatherMap.vue with the following code.
-
-
-  This updated code will:
-  1.  Add a `v-if` to the `<l-map>` component: This will prevent the map from rendering until mapCenter has a valid value.
-  2.  Improve the loading indicator: The loading indicator will now be more prominent, making it clear to the user that the map is loading.
-
-  Here is the code to use:
-
-
-  `javascript
-  <script setup>
-  import { ref, watch } from 'vue';
-  import {
-    LMap,
-    LTileLayer,
-    LMarker,
-    LPopup,
-  } from "@vue-leaflet/vue-leaflet";
-  import 'leaflet/dist/leaflet.css';
-  import L from 'leaflet';
-
-  // Fix missing marker icons
-  delete L.Icon.Default.prototype._getIconUrl;
-  L.Icon.Default.mergeOptions({
-    iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-    iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-  });
-
-  const props = defineProps({
-    mapCenter: {
-      type: Array,
-      required: true,
-      validator: val => val === null || (Array.isArray(val) && val.length === 2)
-    },
-    markerLatLng: {
-      type: Array,
-      required: true,
-      validator: val => val === null || (Array.isArray(val) && val.length === 2)
-    },
-    deviceAddress: {
-      type: String,
-      required: true
-    },
-    temperature: {
-      type: [String, Number],
-      required: true
-    },
-    humidity: {
-      type: [String, Number],
-      required: true
-    },
-    rainfall: {
-      type: [String, Number],
-      required: true
-    }
-  });
-
-  const mapConfig = {
-    zoom: 15,
-    tileUrl: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-    popupOptions: {
-      closeOnClick: false,
-      autoClose: false,
-      className: 'custom-popup'
-    }
-  };
-
-  const mapZoom = ref(mapConfig.zoom);
-  const isMapLoading = ref(true);
-  const mapError = ref(null);
-  const mapRef = ref(null);
-
-  const onMapReady = () => {
-    isMapLoading.value = false;
-  };
-
-  const onMapError = (error) => {
-    console.error('Map error:', error);
-    mapError.value = 'Failed to load map properly';
-    isMapLoading.value = false;
-  };
-
-  watch(() => props.mapCenter, (newCenter) => {
-    if (mapRef.value && newCenter) {
-      mapRef.value.leafletObject.setView(newCenter, mapConfig.zoom);
-    }
-  });
-  </script>
-
-  <template>
-    <div class="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg">
-      <!-- Header -->
-      <div class="flex items-center justify-between mb-6">
-        <h3 class="text-lg font-medium text-gray-700">Station Location</h3>
-        <span class="text-sm text-gray-600 font-medium">{{ deviceAddress }}</span>
-      </div>
-
-      <!-- Map -->
-      <div class="relative h-[400px] rounded-xl overflow-hidden">
-        <div v-if="!mapCenter"
-             class="absolute inset-0 flex items-center justify-center bg-white/50 backdrop-blur-sm z-10">
-          <div class="text-center">
-            <div class="animate-pulse text-gray-600">Waiting for location data...</div>
-          </div>
-        </div>
-
-        <div v-if="mapError"
-             class="absolute inset-0 flex items-center justify-center bg-red-100 text-red-600 font-medium z-20">
-          {{ mapError }}
-        </div>
-
-        <l-map
-          v-if="mapCenter"
-          ref="mapRef"
-          v-model:zoom="mapZoom"
-          :center="mapCenter"
-          @ready="onMapReady"
-          @error="onMapError"
-          class="h-full w-full rounded-xl shadow-inner"
-        >
-          <l-tile-layer
-            :url="mapConfig.tileUrl"
-            :attribution="mapConfig.attribution"
-          />
-          <l-marker :lat-lng="markerLatLng">
-            <l-popup :options="mapConfig.popupOptions">
-              <div class="p-3">
-                <h4 class="font-medium text-gray-800 mb-2">Weather Station</h4>
-                <div class="space-y-2">
-                  <p class="flex items-center justify-between text-sm">
-                    <span class="text-gray-600">Temperature</span>
-                    <span class="font-medium text-red-500">{{ temperature }}°C</span>
-                  </p>
-                  <p class="flex items-center justify-between text-sm">
-                    <span class="text-gray-600">Humidity</span>
-                    <span class="font-medium text-blue-500">{{ humidity }}%</span>
-                  </p>
-                  <p class="flex items-center justify-between text-sm">
-                    <span class="text-gray-600">Rainfall</span>
-                    <span class="font-medium text-indigo-500">{{ rainfall }}mm</span>
-                  </p>
-                </div>
-              </div>
-            </l-popup>
-          </l-marker>
-        </l-map>
-      </div>
-    </div>
-  </template>
-
-  <style scoped>
-  .leaflet-container {
-    border-radius: 0.75rem;
-  }
-  .leaflet-popup-content-wrapper {
-    border-radius: 0.75rem;
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-  }
-  .leaflet-popup-content {
-    margin: 0;
-    min-width: 220px;
-  }
-  .custom-popup .leaflet-popup-tip,
-  .custom-popup .leaflet-popup-content-wrapper {
-    background: white;
-    color: #2c3e50;
-  }
-  .custom-popup .leaflet-popup-close-button {
-    color: #2c3e50;
-  }
-  .custom-popup .leaflet-popup-close-button:hover {
-    color: #000;
-  }
-  </style>
-  `
-
-╭───────────────────────────────╮
-│  > still plotted in new york  │
-╰───────────────────────────────╯
-
-✦ I'm sorry to hear that. It seems like the issue is more persistent than I initially thought. I'll need to take a closer look at your
-  project to understand why the map is still defaulting to New York.
-
-
-  I'll start by listing the files in your src directory to get a better overview of the project structure.
- ╭───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
- │ ✓  ReadFolder dashboard\weather-dashboard\src                                                                                             │
- │                                                                                                                                           │
- │    Listed 8 item(s).                                                                                                                      │
- ╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-✦ Okay, the directory structure is as I expected.
-
-
-  Now, I'll read the contents of main.js, App.vue, views/HomeView.vue, and components/WeatherMap.vue again. This will allow me to trace the
-  flow of data from the main application entry point down to the map component and identify where the incorrect location data might be coming
-   from.
- ╭───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
- │ ✓  ReadManyFiles Will attempt to read and concatenate files using patterns:…                                                              │
- │                                                                                                                                           │
- │                                                                                                                                           │
- │    ### ReadManyFiles Result (Target Dir: `C:\Users\PC\Desktop\weather-monitoring-system`)                                                 │
- │                                                                                                                                           │
- │    Successfully read and concatenated content from **4 file(s)**.                                                                         │
- │                                                                                                                                           │
- │    **Processed Files:**                                                                                                                   │
- │    - `dashboard/weather-dashboard/src/App.vue`                                                                                            │
- │    - `dashboard/weather-dashboard/src/components/WeatherMap.vue`                                                                          │
- │    - `dashboard/weather-dashboard/src/main.js`                                                                                            │
- │    - `dashboard/weather-dashboard/src/views/HomeView.vue`                                                                                 │
- ╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-✦ 
-  Thank you for your patience. After reviewing the files again, I've spotted the issue.
-
-
-  The problem lies in HomeView.vue. The mapCenter and markerLatLng are initialized with hardcoded values. Even though WeatherMap.vue is set
-  up to wait for valid coordinates, it receives these initial hardcoded values and renders the map immediately.
-
-
-  To finally resolve this, we need to go back to the approach of initializing the coordinates as null and conditionally rendering the map. I
-  apologize for the back-and-forth. Let's get it right this time.
-
-
-  Step 1: Update the script in `HomeView.vue`
-
-
-  Please replace the <script setup> section of dashboard/weather-dashboard/src/views/HomeView.vue with the following. This will initialize
-  the map coordinates as null.
-
-
-  `javascript
-  <script setup>
-  import { ref as vueRef, onMounted, onUnmounted, computed } from 'vue';
-  import { db } from '@/firebase.js';
-  import { ref as dbRef, onValue } from 'firebase/database';
-
-  // Import the new child components
-  import WeatherCards from '@/components/WeatherCards.vue';
-  import WeatherChart from '@/components/WeatherChart.vue';
-  import WeatherMap from '@/components/WeatherMap.vue';
-
-  // State Management
-  const temperature = vueRef('N/A');
-  const humidity = vueRef('N/A');
-  const rainfall = vueRef('N/A');
-  const isLoading = vueRef(false);
-  const mapCenter = vueRef(null);
-  const markerLatLng = vueRef(null);
-  const deviceAddress = vueRef('Weather Station Location');
-  const lastUpdated = vueRef(null);
-  let unsubscribeLatest;
-
-  const isOnline = computed(() => {
-    if (!lastUpdated.value) return false;
-    // Assumes a 30-second window for "online" status
-    const now = Date.now();
-    return now - lastUpdated.value < 30000;
-  });
-
-  // Data for WeatherCards component
-  const weatherData = [
-    {
-      id: 'temp',
-      title: 'Temperature',
-      value: temperature,
-      unit: '°C',
-      icon: 'ph:thermometer-cold-bold',
-      color: 'text-red-500',
-      bgColor: 'bg-red-100'
-    },
-    {
-      id: 'humidity',
-      title: 'Humidity',
-      value: humidity,
-      unit: '%',
-      icon: 'ph:drop-bold',
-      color: 'text-blue-500',
-      bgColor: 'bg-blue-100'
-    },
-    {
-      id: 'rainfall',
-      title: 'Rainfall',
-      value: rainfall,
-      unit: 'mm',
-      icon: 'ph:cloud-rain-bold',
-      color: 'text-indigo-500',
-      bgColor: 'bg-indigo-100'
-    },
-  ];
-
-  // Location Update Handler
-  const updateDeviceLocation = (data) => {
-    try {
-      if (data.location) {
-        const { lat, lng, address } = data.location;
-        if (lat && lng) {
-          mapCenter.value = [lat, lng];
-          markerLatLng.value = [lat, lng];
-          deviceAddress.value = address || 'Weather Station Location';
-        }
+    onValue(historyQuery, (snap) => {
+      if (!snap.exists()) {
+        chartData.value.labels = [];
+        chartData.value.datasets.forEach(ds => ds.data = []);
+      } else {
+        const records = Object.values(snap.val());
+        const { labels, temp, hum, rain } = processRecords(records, range);
+        chartData.value = {
+          labels,
+          datasets: [
+            { ...chartData.value.datasets[0], data: temp },
+            { ...chartData.value.datasets[1], data: hum },
+            { ...chartData.value.datasets[2], data: rain },
+          ],
+        };
       }
-    } catch (error) {
-      console.error('Error updating device location:', error);
-    }
-  };
-
-  onMounted(() => {
-    isLoading.value = true;
-    try {
-      const latestDataRef = dbRef(db, 'sensor_data/latest');
-      unsubscribeLatest = onValue(latestDataRef, (snapshot) => {
-        const data = snapshot.val();
-        if (data) {
-          temperature.value = data.temperature?.toFixed(1) || 'N/A';
-          humidity.value = data.humidity?.toFixed(0) || 'N/A';
-          rainfall.value = data.rainfall?.toFixed(1) || 'N/A';
-          lastUpdated.value = Date.now();
-          updateDeviceLocation(data);
-        }
-        isLoading.value = false;
-      });
-    } catch (error) {
-      console.error('Error setting up data listeners:', error);
       isLoading.value = false;
-    }
-  });
+    }, (error) => {
+      console.error('Firebase onValue error:', error);
+      isLoading.value = false;
+    });
+  };
+  `
 
-  onUnmounted(() => {
-    if (unsubscribeLatest) unsubscribeLatest();
-  });
-  </script>
+  This change will make your charts load quickly for all time ranges.
+
+  ---
+
+
+  Solution 2: The Best Practice (Backend Aggregation)
+  For the long-term health of your application, the best solution is to have a backend process that pre-calculates daily and monthly
+  summaries.
+
+
+   * You would create a Cloud Function in Firebase.
+  This is more complex to set up but is the standard way to handle large datasets.
+
+  ### Recommendation
+
+
+  For now, I strongly recommend you implement Solution 1 (Indexing and Limiting). It will immediately solve your loading problem and make the
+   app feel fast.
+
+
+  Would you like me to apply the code change from Solution 1 for you?
+
+╭─────────────────────────────────╮
+│  > I want a long term solution  │
+╰─────────────────────────────────╯
+
+✦ Excellent choice. Building a scalable, long-term solution is the professional way to handle this, and it will make your application robust
+  and fast, no matter how much data it collects.
+
+
+  The core of the long-term solution is to stop making the user's browser do heavy data processing. Instead, we will use a Firebase Cloud 
+  Function, which is a small piece of code that runs on Google's servers, to do the work for us automatically.
+
+  ### The High-Level Plan
+
+  Here's the strategy:
+
+
+   1. Create a New Data Structure: We will create new locations in your database called /daily_summaries/ and /monthly_summaries/. These
+      will store pre-calculated averages.
+  Before we can write the code, we need to prepare your project.
+
+
+  A) Upgrade to the Blaze Plan:
+  Cloud Functions require the "Blaze" (Pay-as-you-go) plan. Don't worry, the free tier is so generous you are unlikely to pay anything for 
+  this project.
+     The free tier includes 2 million Cloud Function invocations per month*, which is far more than you will use.
+  *   You need to upgrade because the function needs to make network requests, which is a billable feature (even if it's free within the free
+   tier).
+  *   Go to your Firebase Console, click the gear icon next to "Project Overview," go to "Usage and billing," and select the Blaze plan.
+
+
+  B) Install Firebase CLI:
+  If you haven't already, you need the Firebase command-line tools to deploy functions.
+  In your terminal, run:
+  `bash
+  npm install -g firebase-tools
   `
 
 
-  Let me know when you're ready for the next step.
+  C) Initialize Firebase Functions:
+  1.  Navigate to your project's root directory (C:\Users\PC\Desktop\weather-monitoring-system) in your terminal.
+  2.  Log in to Firebase by running: firebase login
+  3.  Initialize the functions feature by running: firebase init functions
+  4.  Follow the prompts:
+         `Please select an option:` Use an existing project*
+      *   Select your weather-monitoring-system project.
+         `What language would you like to use?` JavaScript*
+         `Do you want to use ESLint...?` Yes*
+         `Do you want to install dependencies with npm now?` Yes*
 
-╭─────────────╮
-│  > proceed  │
-╰─────────────╯
+  This will create a new functions folder in your project. This is where our backend code will live.
 
-✕ [API Error: {"error":{"message":"{\n  \"error\": {\n    \"code\": 429,\n    \"message\": \"You exceeded your current quota, please check 
-  your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits.\",\n    
-  \"status\": \"RESOURCE_EXHAUSTED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/google.rpc.QuotaFailure\",\n     
-     \"violations\": [\n          {\n            \"quotaMetric\": \"generativelanguage.googleapis.com/generate_content_free_tier_requests\",\n
-              \"quotaId\": \"GenerateRequestsPerDayPerProjectPerModel-FreeTier\",\n            \"quotaDimensions\": {\n
-  \"model\": \"gemini-2.5-pro\",\n              \"location\": \"global\"\n            },\n            \"quotaValue\": \"50\"\n          }\n   
-       ]\n      },\n      {\n        \"@type\": \"type.googleapis.com/google.rpc.Help\",\n        \"links\": [\n          {\n
-  \"description\": \"Learn more about Gemini API quotas\",\n            \"url\": \"https://ai.google.dev/gemini-api/docs/rate-limits\"\n      
-      }\n        ]\n      },\n      {\n        \"@type\": \"type.googleapis.com/google.rpc.RetryInfo\",\n        \"retryDelay\": \"44s\"\n    
-    }\n    ]\n  }\n}\n","code":429,"status":"Too Many Requests"}}]
-  Please wait and try again later. To increase your limits, request a quota increase through AI Studio, or switch to another /auth method
+  ---
 
+  ### Step 2: The Cloud Function Code
 
 
-╭─────────────╮
-│  > proceed  │
-╰─────────────╯
+  Now, we'll write the function that performs the daily aggregation.
 
-✦ Great. Now for the final step.
+  File to Edit: functions/index.js (this file was just created).
 
 
-  Please replace the <template> section of dashboard/weather-dashboard/src/views/HomeView.vue with the following. This will add the v-if
-  directive to the <WeatherMap> component, ensuring it only renders when the location data is available.
+  Replace the entire content of functions/index.js with the following code:
 
 
-  `html
-  <template>
-    <div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 p-4 sm:p-6 lg:p-8">
-      <div class="max-w-7xl mx-auto">
-        <div class="mb-10 text-center">
-          <h1 class="text-4xl font-bold text-gray-800 mb-2">MSU - Main Campus Weather Station</h1>
-          <p class="text-gray-600 text-lg">
-            <span :class="isOnline ? 'text-green-500' : 'text-red-500'">●</span>
-            {{ isOnline ? 'Online' : 'Offline' }}
-          </p>
-          <p v-if="lastUpdated" class="text-sm text-gray-500 mt-1">Last updated: {{ new Date(lastUpdated).toLocaleString() }}</p>
-        </div>
+  `javascript
+  const functions = require("firebase-functions");
+  const admin = require("firebase-admin");
 
-        <WeatherCards :weather-data="weatherData" :is-loading="isLoading" />
+  admin.initializeApp();
 
-        <div class="mt-10 grid grid-cols-1 lg:grid-cols-2 gap-8">
-          <WeatherChart />
+  /**
+   * A Cloud Function that runs every day at 1:00 AM (Asia/Manila time)
+   * to aggregate the previous day's sensor logs into a single summary.
+   */
+  exports.aggregateDailySensorData = functions.pubsub
+    .schedule("every day 01:00")
+    .timeZone("Asia/Manila") // Set to your local timezone
+    .onRun(async (context) => {
+      const db = admin.database();
+      const sourceRef = db.ref("/sensor_logs");
+      const targetRef = db.ref("/daily_summaries");
 
-          <WeatherMap
-            v-if="mapCenter && markerLatLng"
-            :map-center="mapCenter"
-            :marker-lat-lng="markerLatLng"
-            :device-address="deviceAddress"
-            :temperature="temperature"
-            :humidity="humidity"
-            :rainfall="rainfall"
-          />
-        </div>
-      </div>
-    </div>
-  </template>
+      // 1. Determine the date range for "yesterday"
+      const now = new Date();
+      const yesterday = new Date(now.setDate(now.getDate() - 1));
+      const year = yesterday.getFullYear();
+      const month = String(yesterday.getMonth() + 1).padStart(2, "0");
+      const day = String(yesterday.getDate()).padStart(2, "0");
+      const targetId = ${year}-${month}-${day};
+
+      const startOfDay = new Date(year, yesterday.getMonth(), day, 0, 0, 0).getTime();
+      const endOfDay = new Date(year, yesterday.getMonth(), day, 23, 59, 59).getTime();
+
+      functions.logger.info(Aggregating data for: ${targetId});
+
+      // 2. Query all sensor logs from yesterday
+      const snapshot = await sourceRef
+        .orderByChild("timestamp")
+        .startAt(startOfDay)
+        .endAt(endOfDay)
+        .once("value");
+
+      if (!snapshot.exists()) {
+        functions.logger.warn(No data found for ${targetId}.);
+        return null;
+      }
+
+      const logs = snapshot.val();
+      const logValues = Object.values(logs);
+      const count = logValues.length;
+
+      // 3. Calculate the aggregates
+      let tempSum = 0;
+      let humiditySum = 0;
+      let rainfallSum = 0;
+
+      logValues.forEach((log) => {
+        tempSum += log.temperature || 0;
+        humiditySum += log.humidity || 0;
+        rainfallSum += log.rainfall || 0;
+      });
+
+      const dailySummary = {
+        timestamp: startOfDay,
+        avg_temp: tempSum / count,
+        avg_humidity: humiditySum / count,
+        total_rainfall: rainfallSum,
+        log_count: count,
+      };
+
+      // 4. Save the summary to the new location
+      await targetRef.child(targetId).set(dailySummary);
+
+      functions.logger.info(Successfully created summary for ${targetId} with ${count} records.);
+      return null;
+    });
   `
 
 
-  This should finally resolve the issue with the map plotting in the wrong location.
+  Step 3: Deploy the Function
+   1. Open your terminal in the functions directory.
+  After a few minutes, your function will be live and will run automatically every night.
+
+  ---
+
+
+  This completes the backend part of the long-term solution. The final step is to update your Vue app to use this new, efficient data.
+
+
+  Are you ready to proceed with updating `ChartsView.vue`?
+
+╭──────────────────────────────────────────────────╮
+│  > aside from that, can you suggest a solution?  │
+╰──────────────────────────────────────────────────╯
+
+✕ [API Error: got status: UNAVAILABLE. {"error":{"code":503,"message":"The model is overloaded. Please try again 
+  later.","status":"UNAVAILABLE"}}]
 
 
 
 
-Using: 4 open files (ctrl+g to view)
+
+
+
+
+╭──────────────────────────────────────────────────╮
+│  > aside from that, can you suggest a solution?  │
+╰──────────────────────────────────────────────────╯
+
+✕ [API Error: got status: UNAVAILABLE. {"error":{"code":503,"message":"The model is overloaded. Please try again 
+  later.","status":"UNAVAILABLE"}}]

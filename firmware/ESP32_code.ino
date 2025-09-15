@@ -12,6 +12,10 @@
 #define DHT_SENSOR_TYPE DHT22
 #define RAIN_SENSOR_PIN 36
 
+// --- NEW: DEVICE LOCATION ---
+#define DEVICE_LATITUDE 7.99795
+#define DEVICE_LONGITUDE 124.25324
+
 // --- GLOBAL OBJECTS ---
 FirebaseData fbdo;
 FirebaseAuth auth;
@@ -20,11 +24,9 @@ DHT dht_sensor(DHT_SENSOR_PIN, DHT_SENSOR_TYPE);
 
 // --- TIMING & STATE VARIABLES ---
 unsigned long sendDataPrevMillis = 0;
-// Let's send data every 10 seconds for now. You can increase this later.
 unsigned long dataSendInterval = 3000;
 bool signupOK = false;
 
-// This is the missing callback function. It runs when Firebase token status changes.
 void tokenStatusCallback(TokenInfo info)
 {
   if (info.status == token_status_ready)
@@ -56,8 +58,6 @@ void setup()
 
   config.api_key = API_KEY;
   config.database_url = DATABASE_URL;
-
-  // This was the missing function
   config.token_status_callback = tokenStatusCallback;
 
   if (Firebase.signUp(&config, &auth, "", ""))
@@ -76,7 +76,6 @@ void setup()
 
 void loop()
 {
-  // Check if Firebase is ready and if it's time to send data
   if (Firebase.ready() && signupOK && (millis() - sendDataPrevMillis > dataSendInterval || sendDataPrevMillis == 0))
   {
     sendDataPrevMillis = millis();
@@ -85,14 +84,12 @@ void loop()
     float temperature = dht_sensor.readTemperature();
     float humidity = dht_sensor.readHumidity();
     int rainRaw = analogRead(RAIN_SENSOR_PIN);
-    // Your mapping is correct: lower raw value = more rain = higher percentage
     int rainPercent = map(rainRaw, 4095, 0, 0, 100);
 
-    // --- 2. VALIDATE SENSOR DATA ---
     if (isnan(temperature) || isnan(humidity))
     {
       Serial.println("Error: Failed to read from DHT sensor!");
-      return; // Exit this loop iteration if sensor fails
+      return;
     }
 
     Serial.println("----------------------------------------");
@@ -101,31 +98,28 @@ void loop()
     Serial.printf("Humidity: %.2f %%\n", humidity);
     Serial.printf("Rainfall Level: %d %%\n", rainPercent);
 
-    // --- 3. PREPARE DATA AS A JSON OBJECT ---
+    // --- 2. PREPARE DATA AS A JSON OBJECT ---
     FirebaseJson jsonData;
     jsonData.set("temperature", temperature);
     jsonData.set("humidity", humidity);
     jsonData.set("rainfall", rainPercent);
-    // This special value tells Firebase to use its own server time as the timestamp.
     jsonData.set("timestamp/.sv", "timestamp");
+    // --- NEW: ADD LOCATION TO JSON ---
+    jsonData.set("location/lat", DEVICE_LATITUDE);
+    jsonData.set("location/lng", DEVICE_LONGITUDE);
 
-    // --- 4. PUSH THE JSON OBJECT TO FIREBASE (FOR HISTORICAL LOGS) ---
+    // --- 3. PUSH THE JSON OBJECT TO FIREBASE (FOR HISTORICAL LOGS) ---
     String historyPath = "/sensor_logs";
     if (Firebase.RTDB.pushJSON(&fbdo, historyPath, &jsonData))
     {
       Serial.println("SUCCESS: Historical data pushed to Firebase.");
-      Serial.print("  > New log created with unique key: ");
-      Serial.println(fbdo.pushName());
     }
     else
     {
-      Serial.println("FAILED: Could not push historical data.");
-      Serial.println("  > REASON: " + fbdo.errorReason());
+      Serial.println("FAILED: Could not push historical data. REASON: " + fbdo.errorReason());
     }
 
-    // --- 5. SET THE JSON OBJECT TO THE 'LATEST' PATH (FOR THE DASHBOARD) ---
-    // This is the key change. We use 'set' to overwrite the data at a fixed path.
-    // Your Vue.js app is listening for this specific path!
+    // --- 4. SET THE JSON OBJECT TO THE 'LATEST' PATH (FOR THE DASHBOARD) ---
     String latestPath = "/sensor_data/latest";
     if (Firebase.RTDB.setJSON(&fbdo, latestPath, &jsonData))
     {
@@ -133,8 +127,7 @@ void loop()
     }
     else
     {
-      Serial.println("FAILED: Could not update latest data.");
-      Serial.println("  > REASON: " + fbdo.errorReason());
+      Serial.println("FAILED: Could not update latest data. REASON: " + fbdo.errorReason());
     }
 
     Serial.println("----------------------------------------");
