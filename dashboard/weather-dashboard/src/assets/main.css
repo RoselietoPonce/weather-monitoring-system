@@ -1,4 +1,30 @@
-@import "tailwindcss";
+@import 'tailwindcss';
+
+/* Your custom theme color variables */
+:root {
+  --color-background: #f8f9fa; /* Light mode background */
+  --color-surface: #ffffff; /* Light mode cards/surfaces */
+  --color-primary: #1a73e8; /* Light mode primary accent (e.g., buttons) */
+  --color-text-main: #202124; /* Light mode main text */
+  --color-text-light: #5f6368; /* Light mode secondary text */
+}
+
+html.dark {
+  --color-background: #121212; /* Dark mode background */
+  --color-surface: #1e1e1e; /* Dark mode cards/surfaces */
+  --color-primary: #8ab4f8; /* Dark mode primary accent */
+  --color-text-main: #e8eaed; /* Dark mode main text */
+  --color-text-light: #9aa0a6; /* Dark mode secondary text */
+}
+
+/* Apply a smooth transition to background and text colors */
+body {
+  background-color: var(--color-background);
+  color: var(--color-text-main);
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease;
+}
 
 /* Custom Scrollbar for Webkit Browsers */
 ::-webkit-scrollbar {
@@ -7,14 +33,28 @@
 }
 
 ::-webkit-scrollbar-track {
-  background: #f0f4f9; /* gemini-gray-100 */
+  background: #f0f4f9; /* Light mode track */
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #c2c8d0; /* gemini-gray-300 */
+  background: #c2c8d0; /* Light mode thumb */
   border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #a3acb9; /* gemini-gray-400 */
+  background: #a3acb9; /* Light mode thumb hover */
+}
+
+/* Dark mode scrollbar styles */
+html.dark ::-webkit-scrollbar-track {
+  background: #222222; /* Dark mode track */
+}
+
+html.dark ::-webkit-scrollbar-thumb {
+  background: #4a4a4a; /* Dark mode thumb */
+  border-radius: 10px;
+}
+
+html.dark ::-webkit-scrollbar-thumb:hover {
+  background: #6a6a6a; /* Dark mode thumb hover */
 }

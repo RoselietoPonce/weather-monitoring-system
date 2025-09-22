@@ -2,11 +2,9 @@
   <div class="p-4 sm:p-6 lg:p-8 font-sans">
     <div class="max-w-7xl mx-auto">
       <!-- Header -->
-      <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-800">Charts & Trends</h1>
-        <p class="text-gray-600 mt-1">
-          View historical graphs of weather parameters.
-        </p>
+      <div class="mb-10">
+        <h1 class="text-4xl font-bold text-text-main tracking-tight">Charts & Trends</h1>
+        <p class="text-text-light mt-2">View historical graphs of weather parameters.</p>
       </div>
 
       <!-- Control Panel -->
@@ -29,10 +27,7 @@
       <!-- Chart Display -->
       <div class="bg-white rounded-2xl shadow-md p-6">
         <div v-memo="[processedChartData, isLoading]">
-          <WeatherChart
-            :chart-data="processedChartData"
-            :is-loading="isLoading"
-          />
+          <WeatherChart :chart-data="processedChartData" :is-loading="isLoading" />
         </div>
       </div>
     </div>
@@ -136,9 +131,7 @@ const formatTimestamp = (date, range) => {
 const processRecords = (records, range) => {
   if (range === TIME_RANGES.LAST_7) {
     return {
-      labels: records.map((r) =>
-        formatTimestamp(new Date(r.timestamp), range)
-      ),
+      labels: records.map((r) => formatTimestamp(new Date(r.timestamp), range)),
       temp: records.map((r) => Number(r.temperature) || 0),
       hum: records.map((r) => Number(r.humidity) || 0),
       rain: records.map((r) => Number(r.rainfall) || 0),
@@ -150,17 +143,14 @@ const processRecords = (records, range) => {
       range === TIME_RANGES.YEARLY
         ? `${date.getFullYear()}-${date.getMonth()}`
         : `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`
-    if (!acc[key])
-      acc[key] = { timestamp: date, temps: [], hums: [], rains: [], count: 0 }
+    if (!acc[key]) acc[key] = { timestamp: date, temps: [], hums: [], rains: [], count: 0 }
     acc[key].temps.push(Number(record.temperature) || 0)
     acc[key].hums.push(Number(record.humidity) || 0)
     acc[key].rains.push(Number(record.rainfall) || 0)
     acc[key].count++
     return acc
   }, {})
-  const sortedGroups = Object.values(groupedData).sort(
-    (a, b) => a.timestamp - b.timestamp
-  )
+  const sortedGroups = Object.values(groupedData).sort((a, b) => a.timestamp - b.timestamp)
   const labels = [],
     temp = [],
     hum = [],
@@ -196,10 +186,7 @@ const listenForHistoricalData = () => {
       chartData.value.labels = []
       chartData.value.datasets.forEach((ds) => (ds.data = []))
     } else {
-      const { labels, temp, hum, rain } = processRecords(
-        Object.values(snap.val()),
-        range
-      )
+      const { labels, temp, hum, rain } = processRecords(Object.values(snap.val()), range)
       chartData.value = {
         labels,
         datasets: [

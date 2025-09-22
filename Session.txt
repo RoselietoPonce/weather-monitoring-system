@@ -1,996 +1,899 @@
 
-  // A computed property to ensure data is always in the correct format
-  const processedChartData = computed(() => ({
-    labels: props.chartData.labels || [],
-    datasets: props.chartData.datasets.map(ds => ({
-      ...ds,
-      data: ds.data.map(v => Number(v) || 0),
-    })),
-  }));
-  </script>
+   1. Open the File:
+   2. Add the New Rule:
+  `rules
+      // This rule allows a user to read and write their own profile data.
+      match /users/{userId} {
+        allow read, write: if request.auth.uid == userId;
+      }
+      `
 
-  <template>
-    <div class="relative h-[400px]">
-      <div
-        v-if="isLoading"
-        class="absolute inset-0 flex items-center justify-center bg-white/50 backdrop-blur-sm rounded-xl z-10"
-      >
-        <div class="animate-pulse text-gray-600">Loading data...</div>
-      </div>
-      <!-- The chart now uses the 'processedChartData' computed property -->
-      <Line v-if="!isLoading" :data="processedChartData" :options="chartOptions" />
-    </div>
-  </template>
+
+  For clarity, here is what your complete `firestore.rules` file should look like after adding the new rule:
+
+
+  `rules
+  rules_version = '2';
+  service cloud.firestore {
+    match /databases/{database}/documents {
+
+      // This is the rule for the global alert settings.
+      match /alerts/thresholds {
+        allow read: if true;
+        allow write: if request.auth != null;
+      }
+
+      // This rule allows your ESP32 sensor to send new data.
+      match /weather_data/{dataId} {
+        allow read: if request.auth != null;
+        allow create: if true;
+      }
+
+      // This rule allows logged-in users to see the alert history.
+      match /alerts_history/{historyId} {
+        allow read: if request.auth != null;
+        allow write: if false;
+      }
+
+      // ===== START: NEW RULE =====
+      // This rule allows a user to read and write their own profile data.
+      match /users/{userId} {
+        allow read, write: if request.auth.uid == userId;
+      }
+      // ===== END: NEW RULE =====
+    }
+  }
   `
 
 
-  After you have replaced the code in WeatherChart.vue, I will provide the code for the parent, ChartsView.vue.
+   3. Deploy the New Rules:
+  After the deployment is complete, your security rules will be updated, and you will be able to save user profiles successfully.
 
-╭──────────────────╮
-│  > lets provide  │
-╰──────────────────╯
+╭─────────────────────────────────────────╮
+│  > when I save change heres the reply:  │
+│                                         │
+│    when I save change heres the reply:  │
+│                                         │
+│    when I save change heres the reply:  │
+╰─────────────────────────────────────────╯
 
 
 ℹRequest cancelled.
  
+ ╭────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+ │ ✓  ReadManyFiles Will attempt to read and concatenate files using patterns:                                                        │
+ │    dashboard/weather-dashboard/src/views/ProfileView.vue                                                                           │
+ │     (within target directory:                                                                                                      │
+ │    C:\Users\PC\Desktop\weather-monitoring-system                                                                                   │
+ │    ) . Excluding: patterns like                                                                                                    │
+ │    **/node_modules/**`, `**/.git/**...`. File encoding: utf-8. Separator: "--- path/to/file.ext ---".                              │
+ │                                                                                                                                    │
+ │    ### ReadManyFiles Result (Target Dir: `C:\Users\PC\Desktop\weather-monitoring-system`)                                          │
+ │                                                                                                                                    │
+ │    Successfully read and concatenated content from **1 file(s)**.                                                                  │
+ │                                                                                                                                    │
+ │    **Processed Files:**                                                                                                            │
+ │    - `dashboard/weather-dashboard/src/views/ProfileView.vue`                                                                       │
+ ╰────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 
-╭──────────────────╮
-│  > lets proceed  │
-╰──────────────────╯
+╭────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│  > when I save change heres the reply:permission-denied, and heres my code @dashboard/weather-dashboard/src/views/ProfileView.vue  │
+╰────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 
-✦ Excellent. Now that WeatherChart.vue is a "dumb" component that accepts props, we can update the parent view, ChartsView.vue, to handle the
-  data fetching and apply the v-memo optimization.
+✦ You are correct. The "permission-denied" error is happening for the exact reason I suspected: your Firestore security rules have not been
+  updated yet to allow users to edit their own profiles.
 
-  ### Step 2: Update ChartsView.vue
 
+  Your Vue code in `ProfileView.vue` is perfectly fine. The problem is not in that file.
 
-  Please replace the entire content of dashboard/weather-dashboard/src/views/ChartsView.vue with the code below.
 
+  The problem is that the rules on the server are still blocking the save operation. This means either:
+  1.  The firestore.rules file was not updated correctly.
+  2.  The changes were not deployed successfully.
 
-  `html
-  <template>
-    <div class="p-4 sm:p-6 lg:p-8 font-sans">
-      <div class="max-w-7xl mx-auto">
-        <!-- Header -->
-        <div class="mb-8">
-          <h1 class="text-3xl font-bold text-gray-800">Charts & Trends</h1>
-          <p class="text-gray-600 mt-1">View historical graphs of weather parameters.</p>
-        </div>
+  Let's fix this once and for all.
 
-        <!-- Control Panel -->
-        <div class="bg-white rounded-2xl shadow-md p-6 mb-8">
-          <div class="flex items-center justify-between">
-            <h3 class="text-lg font-medium text-gray-800">Data Time Range</h3>
-            <select
-              v-model="selectedTimeRange"
-              :disabled="isLoading"
-              class="bg-gray-50 border border-gray-300 rounded-lg py-2 px-3 text-sm text-gray-700 focus:outline-none focus:ring-2
-  focus:ring-blue-500 transition"
-            >
-              <option value="last7">Last 7 Readings</option>
-              <option value="weekly">Weekly</option>
-              <option value="monthly">Monthly</option>
-              <option value="yearly">Yearly</option>
-            </select>
-          </div>
-        </div>
 
-        <!-- Chart Display -->
-        <div class="bg-white rounded-2xl shadow-md p-6">
-          <!--
-            OPTIMIZATION: v-memo
-            This tells Vue to only re-render the WeatherChart component if the
-            'processedChartData' object or the 'isLoading' flag has changed.
-            This prevents re-renders from other reactive changes on this page.
-          -->
-          <div v-memo="[processedChartData, isLoading]">
-            <WeatherChart :chart-data="processedChartData" :is-loading="isLoading" />
-          </div>
-        </div>
-      </div>
-    </div>
-  </template>
+  Step 1: Verify Your `firestore.rules` File
+  Please open your firestore.rules file and make sure it contains the rule for the users collection. It must look exactly like this:
 
-  <script setup>
-  import { ref, onUnmounted, watch, computed } from 'vue';
-  import { rtdb } from '@/firebase.js';
-  import {
-    ref as dbRef,
-    onValue,
-    off,
-    query,
-    limitToLast,
-    orderByChild,
-    startAt,
-  } from 'firebase/database';
-  import WeatherChart from '@/components/WeatherChart.vue';
 
-  // --- STATE ---
-  const isLoading = ref(true);
-  const selectedTimeRange = ref('last7');
-  let unsubscribeRef = null;
+  `rules
+  rules_version = '2';
+  service cloud.firestore {
+    match /databases/{database}/documents {
 
-  const chartData = ref({
-    labels: [],
-    datasets: [
-      {
-        label: 'Temperature (°C)',
-        borderColor: 'rgba(239, 68, 68, 1)',
-        backgroundColor: 'rgba(239, 68, 68, 0.2)',
-        data: [],
-        borderWidth: 2,
-        tension: 0.4,
-        yAxisID: 'y',
-      },
-      {
-        label: 'Humidity (%)',
-        borderColor: 'rgba(59, 130, 246, 1)',
-        backgroundColor: 'rgba(59, 130, 246, 0.2)',
-        data: [],
-        borderWidth: 2,
-        tension: 0.4,
-        yAxisID: 'y1',
-      },
-      {
-        label: 'Rainfall (mm)',
-        borderColor: 'rgba(99, 102, 241, 1)',
-        backgroundColor: 'rgba(99, 102, 241, 0.2)',
-        data: [],
-        borderWidth: 2,
-        tension: 0.4,
-        yAxisID: 'y2',
-      },
-    ],
-  });
+      // ... (your other rules for alerts, etc.)
 
-  // A computed property to ensure data is always in the correct format
-  const processedChartData = computed(() => ({
-    labels: chartData.value.labels,
-    datasets: chartData.value.datasets.map(ds => ({
-      ...ds,
-      data: ds.data.map(v => Number(v) || 0),
-    })),
-  }));
-
-
-  // --- HELPERS ---
-  const TIME_RANGES = {
-    LAST_7: 'last7',
-    WEEKLY: 'weekly',
-    MONTHLY: 'monthly',
-    YEARLY: 'yearly',
-  };
-
-  const DAYS_IN_RANGE = {
-    [TIME_RANGES.LAST_7]: 7,
-    [TIME_RANGES.WEEKLY]: 7,
-    [TIME_RANGES.MONTHLY]: 30,
-    [TIME_RANGES.YEARLY]: 365,
-  };
-
-  const formatTimestamp = (date, range) => {
-    switch (range) {
-      case TIME_RANGES.LAST_7:
-        return date.toLocaleString([], { hour: '2-digit', minute: '2-digit' });
-      case TIME_RANGES.WEEKLY:
-        return date.toLocaleString([], { weekday: 'short', month: 'short', day: 'numeric' });
-      case TIME_RANGES.MONTHLY:
-        return date.toLocaleString([], { month: 'short', day: 'numeric' });
-      case TIME_RANGES.YEARLY:
-        return date.toLocaleString([], { month: 'long' });
-      default:
-        return date.toLocaleString();
-    }
-  };
-
-  const processRecords = (records, range) => {
-    if (range === TIME_RANGES.LAST_7) {
-      const labels = records.map(r => formatTimestamp(new Date(r.timestamp), range));
-      const temp = records.map(r => Number(r.temperature) || 0);
-      const hum = records.map(r => Number(r.humidity) || 0);
-      const rain = records.map(r => Number(r.rainfall) || 0);
-      return { labels, temp, hum, rain };
-    }
-
-    const groupedData = records.reduce((acc, record) => {
-      const date = new Date(record.timestamp);
-      let key;
-      if (range === TIME_RANGES.YEARLY) {
-        key = ${date.getFullYear()}-${date.getMonth()};
-      } else {
-        key = ${date.getFullYear()}-${date.getMonth()}-${date.getDate()};
-      }
-      if (!acc[key]) {
-        acc[key] = { timestamp: date, temps: [], hums: [], rains: [], count: 0 };
-      }
-      acc[key].temps.push(Number(record.temperature) || 0);
-      acc[key].hums.push(Number(record.humidity) || 0);
-      acc[key].rains.push(Number(record.rainfall) || 0);
-      acc[key].count++;
-      return acc;
-    }, {});
-
-    const sortedGroups = Object.values(groupedData).sort((a, b) => a.timestamp - b.timestamp);
-    const labels = [], temp = [], hum = [], rain = [];
-
-    sortedGroups.forEach(group => {
-      labels.push(formatTimestamp(group.timestamp, range));
-      temp.push(group.temps.reduce((a, b) => a + b, 0) / group.count);
-      hum.push(group.hums.reduce((a, b) => a + b, 0) / group.count);
-      rain.push(group.rains.reduce((a, b) => a + b, 0) / group.count);
-    });
-
-    return { labels, temp, hum, rain };
-  };
-
-
-  // --- FIREBASE LISTENER ---
-  const listenForHistoricalData = () => {
-    isLoading.value = true;
-    if (unsubscribeRef) off(unsubscribeRef);
-
-    const historyRef = dbRef(rtdb, 'sensor_logs');
-    const range = selectedTimeRange.value;
-    let historyQuery;
-
-    if (range === TIME_RANGES.LAST_7) {
-      historyQuery = query(historyRef, orderByChild('timestamp'), limitToLast(7));
-    } else {
-      const startTime = Date.now() - DAYS_IN_RANGE[range] * 86400000;
-      historyQuery = query(historyRef, orderByChild('timestamp'), startAt(startTime));
-    }
-
-    unsubscribeRef = historyRef; // Keep ref for cleanup
-
-    onValue(historyQuery, (snap) => {
-      if (!snap.exists()) {
-        chartData.value.labels = [];
-        chartData.value.datasets.forEach(ds => ds.data = []);
-      } else {
-        const records = Object.values(snap.val());
-        const { labels, temp, hum, rain } = processRecords(records, range);
-        chartData.value = {
-          labels,
-          datasets: [
-            { ...chartData.value.datasets[0], data: temp },
-            { ...chartData.value.datasets[1], data: hum },
-            { ...chartData.value.datasets[2], data: rain },
-          ],
-        };
-      }
-      isLoading.value = false;
-    }, (error) => {
-      console.error('Firebase onValue error:', error);
-      isLoading.value = false;
-    });
-  };
-
-
-  // --- LIFECYCLE ---
-  watch(selectedTimeRange, listenForHistoricalData, { immediate: true });
-
-  onUnmounted(() => {
-    if (unsubscribeRef) off(unsubscribeRef);
-  });
-  </script>
-  `
-
-  ### Summary of Changes
-
-
-   1. Data Logic Moved: All the state, Firebase listeners, and helper functions for processing data now live in ChartsView.vue.
-  You now have a much more robust and performant charting page that follows Vue best practices.
-
-ℹUser cancelled the request.
- 
-
-╭─────────────────────────────────────────────────╮
-│  > <template>    <div class="p-4 sm:p-6 lg:p-8  │
-│                                                 │
-│    <template>    <div class="p-4 sm:p-6 lg:p-8  │
-│                                                 │
-│    <template>    <div class="p-4 sm:p-6 lg:p-8  │
-│                                                 │
-│    <template>    <div class="p-4 sm:p-6 lg:p-8  │
-│                                                 │
-│    <template>    <div class="p-4 sm:p-6 lg:p-8  │
-│                                                 │
-│    <template>    <div class="p-4 sm:p-6 lg:p-8  │
-│                                                 │
-│    <template>    <div class="p-4 sm:p-6 lg:p-8  │
-│                                                 │
-│    <template>    <div class="p-4 sm:p-6 lg:p-8  │
-╰─────────────────────────────────────────────────╯
-
-✕ [API Error: exception TypeError: fetch failed sending request]
-
- ╭───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
- │ ✓  ReadManyFiles Will attempt to read and concatenate files using patterns:                                                               │
- │    dashboard/weather-dashboard/src/components/WeatherChart.vue`, `dashboard/weather-dashboard/src/views/ChartsView.vue                    │
- │     (within target directory:                                                                                                             │
- │    C:\Users\PC\Desktop\weather-monitoring-system                                                                                          │
- │    ) . Excluding: patterns like                                                                                                           │
- │    **/node_modules/**`, `**/.git/**...`. File encoding: utf-8. Separator: "--- path/to/file.ext ---".                                     │
- │                                                                                                                                           │
- │    ### ReadManyFiles Result (Target Dir: `C:\Users\PC\Desktop\weather-monitoring-system`)                                                 │
- │                                                                                                                                           │
- │    Successfully read and concatenated content from **2 file(s)**.                                                                         │
- │                                                                                                                                           │
- │    **Processed Files:**                                                                                                                   │
- │    - `dashboard/weather-dashboard/src/components/WeatherChart.vue`                                                                        │
- │    - `dashboard/weather-dashboard/src/views/ChartsView.vue`                                                                               │
- ╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-
-╭───────────────────────────────────────────────────────────────────────────────────────────╮
-│  > check my old code first @dashboard/weather-dashboard/src/components/WeatherChart.vue   │
-│    @dashboard/weather-dashboard/src/views/ChartsView.vue                                  │
-╰───────────────────────────────────────────────────────────────────────────────────────────╯
-
-✦ Of course. I have reviewed the original code for both WeatherChart.vue and ChartsView.vue. My previous explanation for refactoring them is
-  correct. The WeatherChart.component is doing all the work, and the ChartsView is just a simple wrapper.
-
-
-  To implement v-memo effectively, we need to lift the state and data-fetching logic from the child (WeatherChart) to the parent
-  (ChartsView).
-
-
-  Here is the complete, refactored code for both files.
-
-  ### Step 1: Replace WeatherChart.vue
-
-
-  Replace the entire content of dashboard/weather-dashboard/src/components/WeatherChart.vue with this code. This version only receives props
-  and displays the chart.
-
-
-  `html
-  <script setup>
-  import { computed } from 'vue';
-  import { Line } from 'vue-chartjs';
-  import {
-    Chart as ChartJS,
-    CategoryScale,
-    LinearScale,
-    PointElement,
-    LineElement,
-    Title,
-    Tooltip,
-    Legend,
-    Decimation,
-  } from 'chart.js';
-
-  // Register Chart.js plugins
-  ChartJS.register(
-    CategoryScale,
-    LinearScale,
-    PointElement,
-    LineElement,
-    Title,
-    Tooltip,
-    Legend,
-    Decimation
-  );
-
-  // Define props to accept data from the parent
-  const props = defineProps({
-    chartData: {
-      type: Object,
-      required: true,
-    },
-    isLoading: {
-      type: Boolean,
-      default: false,
-    },
-  });
-
-  // The chart options remain the same
-  const chartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    interaction: { mode: 'nearest', axis: 'x', intersect: false },
-    plugins: {
-      legend: { position: 'top', labels: { usePointStyle: true, padding: 20 } },
-      tooltip: {
-        mode: 'index',
-        intersect: false,
-        callbacks: {
-          label: (ctx) =>
-            `${ctx.dataset.label}: ${
-              ctx.parsed.y != null ? ctx.parsed.y.toFixed(1) : 0
-            }`,
-        },
-      },
-    },
-    scales: {
-      x: { ticks: { autoSkip: true, maxRotation: 45, minRotation: 45 } },
-      y: {
-        type: 'linear',
-        display: true,
-        position: 'left',
-        title: { display: true, text: 'Temperature (°C)' },
-        ticks: { callback: (v) => ${v}°C },
-      },
-      y1: {
-        type: 'linear',
-        display: true,
-        position: 'right',
-        grid: { drawOnChartArea: false },
-        title: { display: true, text: 'Humidity (%)' },
-        ticks: { callback: (v) => ${v}% },
-      },
-      y2: {
-        type: 'linear',
-        display: true,
-        position: 'right',
-        grid: { drawOnChartArea: false },
-        title: { display: true, text: 'Rainfall (mm)' },
-        ticks: { callback: (v) => ${v}mm },
-      },
-    },
-  };
-
-  // A computed property to ensure data is always in the correct format
-  const processedChartData = computed(() => ({
-    labels: props.chartData.labels || [],
-    datasets: props.chartData.datasets.map(ds => ({
-      ...ds,
-      data: ds.data.map(v => Number(v) || 0),
-    })),
-  }));
-  </script>
-
-  <template>
-    <div class="relative h-[400px]">
-      <div
-        v-if="isLoading"
-        class="absolute inset-0 flex items-center justify-center bg-white/50 backdrop-blur-sm rounded-xl z-10"
-      >
-        <div class="animate-pulse text-gray-600">Loading data...</div>
-      </div>
-      <!-- The chart now uses the 'processedChartData' computed property -->
-      <Line v-if="!isLoading" :data="processedChartData" :options="chartOptions" />
-    </div>
-  </template>
-  `
-
-
-  Step 2: Replace ChartsView.vue
-  Now, replace the entire content of dashboard/weather-dashboard/src/views/ChartsView.vue with this code. This version handles the data and
-  uses v-memo.
-
-
-  `html
-  <template>
-    <div class="p-4 sm:p-6 lg:p-8 font-sans">
-      <div class="max-w-7xl mx-auto">
-        <!-- Header -->
-        <div class="mb-8">
-          <h1 class="text-3xl font-bold text-gray-800">Charts & Trends</h1>
-          <p class="text-gray-600 mt-1">View historical graphs of weather parameters.</p>
-        </div>
-
-        <!-- Control Panel -->
-        <div class="bg-white rounded-2xl shadow-md p-6 mb-8">
-          <div class="flex items-center justify-between">
-            <h3 class="text-lg font-medium text-gray-800">Data Time Range</h3>
-            <select
-              v-model="selectedTimeRange"
-              :disabled="isLoading"
-              class="bg-gray-50 border border-gray-300 rounded-lg py-2 px-3 text-sm text-gray-700 focus:outline-none focus:ring-2
-  focus:ring-blue-500 transition"
-            >
-              <option value="last7">Last 7 Readings</option>
-              <option value="weekly">Weekly</option>
-              <option value="monthly">Monthly</option>
-              <option value="yearly">Yearly</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- Chart Display -->
-        <div class="bg-white rounded-2xl shadow-md p-6">
-          <!--
-            OPTIMIZATION: v-memo
-            This tells Vue to only re-render the WeatherChart component if the
-            'processedChartData' object or the 'isLoading' flag has changed.
-          -->
-          <div v-memo="[processedChartData, isLoading]">
-            <WeatherChart :chart-data="processedChartData" :is-loading="isLoading" />
-          </div>
-        </div>
-      </div>
-    </div>
-  </template>
-
-  <script setup>
-  import { ref, onUnmounted, watch, computed } from 'vue';
-  import { rtdb } from '@/firebase.js';
-  import {
-    ref as dbRef,
-    onValue,
-    off,
-    query,
-    limitToLast,
-    orderByChild,
-    startAt,
-  } from 'firebase/database';
-  import WeatherChart from '@/components/WeatherChart.vue';
-
-  // --- STATE ---
-  const isLoading = ref(true);
-  const selectedTimeRange = ref('last7');
-  let unsubscribeRef = null;
-
-  const chartData = ref({
-    labels: [],
-    datasets: [
-      {
-        label: 'Temperature (°C)',
-        borderColor: 'rgba(239, 68, 68, 1)',
-        backgroundColor: 'rgba(239, 68, 68, 0.2)',
-        data: [],
-        borderWidth: 2,
-        tension: 0.4,
-        yAxisID: 'y',
-      },
-      {
-        label: 'Humidity (%)',
-        borderColor: 'rgba(59, 130, 246, 1)',
-        backgroundColor: 'rgba(59, 130, 246, 0.2)',
-        data: [],
-        borderWidth: 2,
-        tension: 0.4,
-        yAxisID: 'y1',
-      },
-      {
-        label: 'Rainfall (mm)',
-        borderColor: 'rgba(99, 102, 241, 1)',
-        backgroundColor: 'rgba(99, 102, 241, 0.2)',
-        data: [],
-        borderWidth: 2,
-        tension: 0.4,
-        yAxisID: 'y2',
-      },
-    ],
-  });
-
-  const processedChartData = computed(() => ({
-    labels: chartData.value.labels,
-    datasets: chartData.value.datasets.map(ds => ({
-      ...ds,
-      data: ds.data.map(v => Number(v) || 0),
-    })),
-  }));
-
-
-  // --- HELPERS ---
-  const TIME_RANGES = { LAST_7: 'last7', WEEKLY: 'weekly', MONTHLY: 'monthly', YEARLY: 'yearly' };
-  const DAYS_IN_RANGE = { [TIME_RANGES.LAST_7]: 7, [TIME_RANGES.WEEKLY]: 7, [TIME_RANGES.MONTHLY]: 30, [TIME_RANGES.YEARLY]: 365 };
-
-  const formatTimestamp = (date, range) => {
-    switch (range) {
-      case TIME_RANGES.LAST_7: return date.toLocaleString([], { hour: '2-digit', minute: '2-digit' });
-      case TIME_RANGES.WEEKLY: return date.toLocaleString([], { weekday: 'short', month: 'short', day: 'numeric' });
-      case TIME_RANGES.MONTHLY: return date.toLocaleString([], { month: 'short', day: 'numeric' });
-      case TIME_RANGES.YEARLY: return date.toLocaleString([], { month: 'long' });
-      default: return date.toLocaleString();
-    }
-  };
-
-  const processRecords = (records, range) => {
-    if (range === TIME_RANGES.LAST_7) {
-      return {
-        labels: records.map(r => formatTimestamp(new Date(r.timestamp), range)),
-        temp: records.map(r => Number(r.temperature) || 0),
-        hum: records.map(r => Number(r.humidity) || 0),
-        rain: records.map(r => Number(r.rainfall) || 0),
-      };
-    }
-    const groupedData = records.reduce((acc, record) => {
-      const date = new Date(record.timestamp);
-      const key = range === TIME_RANGES.YEARLY ? ${date.getFullYear()}-${date.getMonth()} :
-  ${date.getFullYear()}-${date.getMonth()}-${date.getDate()};
-      if (!acc[key]) acc[key] = { timestamp: date, temps: [], hums: [], rains: [], count: 0 };
-      acc[key].temps.push(Number(record.temperature) || 0);
-      acc[key].hums.push(Number(record.humidity) || 0);
-      acc[key].rains.push(Number(record.rainfall) || 0);
-      acc[key].count++;
-      return acc;
-    }, {});
-    const sortedGroups = Object.values(groupedData).sort((a, b) => a.timestamp - b.timestamp);
-    const labels = [], temp = [], hum = [], rain = [];
-    sortedGroups.forEach(g => {
-      labels.push(formatTimestamp(g.timestamp, range));
-      temp.push(g.temps.reduce((a, b) => a + b, 0) / g.count);
-      hum.push(g.hums.reduce((a, b) => a + b, 0) / g.count);
-      rain.push(g.rains.reduce((a, b) => a + b, 0) / g.count);
-    });
-    return { labels, temp, hum, rain };
-  };
-
-  // --- FIREBASE LISTENER ---
-  const listenForHistoricalData = () => {
-    isLoading.value = true;
-    if (unsubscribeRef) off(unsubscribeRef);
-    const historyRef = dbRef(rtdb, 'sensor_logs');
-    const range = selectedTimeRange.value;
-    let historyQuery;
-    if (range === TIME_RANGES.LAST_7) {
-      historyQuery = query(historyRef, orderByChild('timestamp'), limitToLast(7));
-    } else {
-      const startTime = Date.now() - DAYS_IN_RANGE[range] * 86400000;
-      historyQuery = query(historyRef, orderByChild('timestamp'), startAt(startTime));
-    }
-    unsubscribeRef = historyRef;
-    onValue(historyQuery, (snap) => {
-      if (!snap.exists()) {
-        chartData.value.labels = [];
-        chartData.value.datasets.forEach(ds => ds.data = []);
-      } else {
-        const { labels, temp, hum, rain } = processRecords(Object.values(snap.val()), range);
-        chartData.value = {
-          labels,
-          datasets: [
-            { ...chartData.value.datasets[0], data: temp },
-            { ...chartData.value.datasets[1], data: hum },
-            { ...chartData.value.datasets[2], data: rain },
-          ],
-        };
-      }
-      isLoading.value = false;
-    }, (error) => {
-      console.error('Firebase onValue error:', error);
-      isLoading.value = false;
-    });
-  };
-
-  // --- LIFECYCLE ---
-  watch(selectedTimeRange, listenForHistoricalData, { immediate: true });
-  onUnmounted(() => { if (unsubscribeRef) off(unsubscribeRef); });
-  </script>
-  `
- ╭───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
- │ ✓  ReadManyFiles Will attempt to read and concatenate files using patterns:                                                               │
- │    dashboard/weather-dashboard/src/components/WeatherChart.vue`, `dashboard/weather-dashboard/src/views/ChartsView.vue                    │
- │     (within target directory:                                                                                                             │
- │    C:\Users\PC\Desktop\weather-monitoring-system                                                                                          │
- │    ) . Excluding: patterns like                                                                                                           │
- │    **/node_modules/**`, `**/.git/**...`. File encoding: utf-8. Separator: "--- path/to/file.ext ---".                                     │
- │                                                                                                                                           │
- │    ### ReadManyFiles Result (Target Dir: `C:\Users\PC\Desktop\weather-monitoring-system`)                                                 │
- │                                                                                                                                           │
- │    Successfully read and concatenated content from **2 file(s)**.                                                                         │
- │                                                                                                                                           │
- │    **Processed Files:**                                                                                                                   │
- │    - `dashboard/weather-dashboard/src/components/WeatherChart.vue`                                                                        │
- │    - `dashboard/weather-dashboard/src/views/ChartsView.vue`                                                                               │
- ╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-
-╭───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│  > check it again @dashboard/weather-dashboard/src/components/WeatherChart.vue @dashboard/weather-dashboard/src/views/ChartsView.vue  │
-╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-
-✦ Excellent. I have reviewed the new code for both WeatherChart.vue and ChartsView.vue, and the implementation is perfect.
-
-  You have successfully refactored the components:
-
-
-   1. `WeatherChart.vue` is now a clean, reusable presentation component. It correctly accepts chartData and isLoading as props and does
-      nothing else but display the chart.
-  `html
-      <div v-memo="[processedChartData, isLoading]">
-        <WeatherChart
-          :chart-data="processedChartData"
-          :is-loading="isLoading"
-        />
-      </div>
-      `
-
-
-  This implementation achieves our goal perfectly. The WeatherChart component will now only re-render when its essential data dependencies
-  (processedChartData or isLoading) have changed, preventing unnecessary rendering cycles and optimizing your application's performance.
-
-
-  This is a great example of applying Vue best practices for state management and performance. Well done.
-
-╭───────────────────────────────────────────────────────────────────────────────╮
-│  > when I try to access the weekly, monthly, and yearly, why its so loading?  │
-╰───────────────────────────────────────────────────────────────────────────────╯
-
-✦ That's an excellent and very important observation. The long loading time you're seeing is a classic performance issue that happens when an
-  application starts handling a large amount of data.
-
-
-  You've pinpointed the exact problem with the current design. Let me explain why it's happening and how we can fix it.
-
-
-  The Core Problem: Client-Side Overload
-   1. "Last 7 Readings" (Fast): When you select this option, your app sends a very efficient query to Firebase: limitToLast(7). This is like
-      telling the database, "Please do the work of finding the last 7 rows and send only those 7 to me." This is very fast because the
-      database does the heavy lifting.
-   2. "Weekly," "Monthly," "Yearly" (Slow): When you select these, your app sends a different query: startAt(a-long-time-ago). This is like
-      telling the database, "Please send me every single row from last year up to today."
-  If your sensor sends data every 10 seconds, a yearly query could be asking the database to send over 3 million data points to your browser.
-   Your browser then has to:
-  *   Download all of this massive data.
-  *   Loop through millions of items in the processRecords function to calculate the daily or monthly averages.
-
-
-  This is what's causing the long loading time and can even crash the browser tab. The client is being asked to do a job that the server
-  should be doing.
-
-  ---
-
-
-  The Solutions
-  There are two main ways to solve this. One is a quick fix that makes a trade-off, and the other is the professional, long-term solution.
-
-  #### Solution 1: The Immediate Fix (Client-Side Limiting & Indexing)
-
-  This is the fastest way to make the app usable right now, without changing the backend.
-
-
-  A) Add a Data Index: First, you MUST tell the database to create an index on the timestamp field. Without this, even the startAt query is
-  slow.
-
-
-   1. Go to your Firebase Console.
-  `json
-  {
-    "rules": {
-      ".read": "auth != null",
-      ".write": "auth != null",
-      "sensor_logs": {
-        ".indexOn": "timestamp"
+      // This rule is the one that fixes the problem
+      match /users/{userId} {
+        allow read, write: if request.auth.uid == userId;
       }
     }
   }
   `
-  Click "Publish". This is a critical performance boost.
+  The most important line is allow read, write: if request.auth.uid == userId;. This says, "A user is only allowed to edit a document in
+  the /users/ collection if their own user ID matches the document's ID."
+
+  ### Step 2: Deploy the Rules to Firebase
 
 
-  B) Limit the Query: We can add a limitToLast() to the less efficient queries. This won't be perfectly accurate for calculating averages
-  over a whole year, but it will make the chart load instantly.
+  This is the most critical step. The changes you make on your computer do nothing until you send them to the server.
 
 
-  Let's modify the listenForHistoricalData function in ChartsView.vue.
+   1. Open your terminal.
+  `bash
+      cd C:\Users\PC\Desktop\weather-monitoring-system
+      `
+  3.  Run the deploy command:
+
+  `bash
+      firebase deploy --only firestore
+      `
+  4.  Wait for the `✔ Deploy complete!` message.
 
 
-  File to Edit: dashboard/weather-dashboard/src/views/ChartsView.vue
+  Until you successfully run the deploy command, you will continue to get the "permission-denied" error. Once the deployment is complete,
+  the error will be gone, and you will be able to save your profile.
+ ╭─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+ │ ✓  ReadManyFiles Will attempt to read and concatenate files using patterns:                                                     │
+ │    firestore.rules                                                                                                              │
+ │     (within target directory:                                                                                                   │
+ │    C:\Users\PC\Desktop\weather-monitoring-system                                                                                │
+ │    ) . Excluding: patterns like                                                                                                 │
+ │    **/node_modules/**`, `**/.git/**...`. File encoding: utf-8. Separator: "--- path/to/file.ext ---".                           │
+ │                                                                                                                                 │
+ │    ### ReadManyFiles Result (Target Dir: `C:\Users\PC\Desktop\weather-monitoring-system`)                                       │
+ │                                                                                                                                 │
+ │    Successfully read and concatenated content from **1 file(s)**.                                                               │
+ │                                                                                                                                 │
+ │    **Processed Files:**                                                                                                         │
+ │    - `firestore.rules`                                                                                                          │
+ ╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 
-  Replace the listenForHistoricalData function with this updated version:
+╭─────────────────────────────────────╮
+│  > check it first @firestore.rules  │
+╰─────────────────────────────────────╯
+
+✦ Thank you for showing me the file.
+
+
+  This is the cause of the problem.
+
+
+  Your firestore.rules file is missing the necessary rule to allow users to edit their own profiles. It only has the rules for alerts,
+  weather_data, and alerts_history.
+
+
+  You need to add the rule for the users collection.
+
+  ### Action Required
+
+
+   1. Open `firestore.rules`.
+  `rules
+      // This rule allows a user to read and write their own profile data.
+      match /users/{userId} {
+        allow read, write: if request.auth.uid == userId;
+      }
+      `
+
+
+   3. Save the file.
+  Once you do this, the "permission-denied" error will be resolved.
+
+╭──────────────────────────────────────────────────────────────────────────────────────────────────╮
+│  > its done, but I want the darkmode as a icon only. Also its not functioning even I turn it on  │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+✦ You've run into two very common issues. Let's solve them.
+
+
+   1. Functionality: The dark mode toggle isn't changing the appearance of the site.
+  This almost always happens for one of two reasons:
+
+
+   * Reason A: The Tailwind configuration file is incorrect.
+  Action 1: Please show me your current `tailwind.config.js` file. I need to see the final version to confirm the dark mode colors were
+  added correctly.
+
+
+  Action 2: Restart Your Development Server. This is a critical step that is easy to forget.
+  1.  Go to your terminal where the npm run dev command is running.
+  2.  Press Ctrl + C to stop the server.
+  3.  Run npm run dev again to restart it.
+
+
+  Restarting the server forces it to read your new tailwind.config.js file and generate all the new dark mode styles. This step alone 
+  will likely fix the problem.
+
+  ---
+
+
+  Part 2: Changing the Toggle to an Icon
+  Once the functionality is working, we can change the button's appearance. This is a great idea for a cleaner UI.
+
+
+  I will guide you on how to replace the switch with a single, elegant icon button that toggles between a sun and a moon.
+
+
+  First, let's get the functionality working by checking your config file and restarting the server. Please show me the
+  tailwind.config.js file.
+ ╭─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+ │ ✓  ReadManyFiles Will attempt to read and concatenate files using patterns:…                                                    │
+ │                                                                                                                                 │
+ │                                                                                                                                 │
+ │    ### ReadManyFiles Result (Target Dir: `C:\Users\PC\Desktop\weather-monitoring-system`)                                       │
+ │                                                                                                                                 │
+ │    Successfully read and concatenated content from **4 file(s)**.                                                               │
+ │                                                                                                                                 │
+ │    **Processed Files:**                                                                                                         │
+ │    - `dashboard/weather-dashboard/src/App.vue`                                                                                  │
+ │    - `dashboard/weather-dashboard/src/composables/useTheme.js`                                                                  │
+ │    - `dashboard/weather-dashboard/src/views/ProfileView.vue`                                                                    │
+ │    - `dashboard/weather-dashboard/tailwind.config.js`                                                                           │
+ ╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+╭───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│  > check this all @dashboard/weather-dashboard/src/composables/useTheme.js @dashboard/weather-dashboard/src/App.vue   │
+│    @dashboard/weather-dashboard/tailwind.config.js @dashboard/weather-dashboard/src/views/ProfileView.vue             │
+╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+✦ Thank you for providing all the files. I have reviewed them carefully, and I've found the exact reason why dark mode is not working.
+
+  ### The Problem: Incorrect Tailwind Configuration
+
+
+  Your tailwind.config.js file has a small but critical syntax error. The dark color palette is defined, but it's not in a place where
+  Tailwind can use it for the dark: variant.
+
+
+  Your current `theme` block looks like this:
 
 
   `javascript
-  // --- FIREBASE LISTENER ---
-  const listenForHistoricalData = () => {
-    isLoading.value = true;
-    if (unsubscribeRef) off(unsubscribeRef);
+  theme: {
+    extend: {
+      colors: {
+        // ... light mode colors
+        dark: { // <--- This is the problem
+          // ... dark mode colors
+        }
+      }
+    }
+  }
+  `
 
-    const historyRef = dbRef(rtdb, 'sensor_logs');
-    const range = selectedTimeRange.value;
-    let historyQuery;
 
-    if (range === TIME_RANGES.LAST_7) {
-      historyQuery = query(historyRef, orderByChild('timestamp'), limitToLast(7));
-    } else {
-      const startTime = Date.now() - DAYS_IN_RANGE[range] * 86400000;
-      // --- FIX: Add a limit to prevent fetching too much data ---
-      // We fetch the last 1000 records within the selected time range.
-      // This is a balance between performance and data granularity.
-      historyQuery = query(
-        historyRef,
-        orderByChild('timestamp'),
-        startAt(startTime),
-        limitToLast(1000) // Prevents browser overload
-      );
+  You cannot just add a nested dark object inside colors. Tailwind's dark: variant works by looking for specific class names like
+  dark:bg-gray-800, not by swapping out the entire color palette.
+
+
+  The Solution: Restructure the Config and Vue files
+  We need to do two things:
+  1.  Fix `tailwind.config.js`: We will define the dark mode colors correctly at the top level of the colors object.
+  2.  Update `ProfileView.vue`: We will change the class names in your template to use the new, correct color names.
+
+
+  I will guide you through this.
+
+  ---
+
+  ### Step 1: Fix `tailwind.config.js`
+
+
+   1. Open the file: dashboard/weather-dashboard/tailwind.config.js
+  `javascript
+      theme: {
+        extend: {
+          colors: {
+            background: 'var(--color-background)',
+            surface: 'var(--color-surface)',
+            primary: 'var(--color-primary)',
+            'text-main': 'var(--color-text-main)',
+            'text-light': 'var(--color-text-light)',
+          },
+          animation: {
+            'pulse-fast': 'pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+          },
+        },
+      },
+      `
+
+
+   3. Save the file and RESTART your development server (`npm run dev`). This is essential.
+  Step 2: Update `base.css` to Define the Color Variables
+   1. Open the file: dashboard/weather-dashboard/src/assets/base.css
+  `css
+      :root {
+        --color-background: #f8f9fa;
+        --color-surface: #ffffff;
+        --color-primary: #1a73e8;
+        --color-text-main: #202124;
+        --color-text-light: #5f6368;
+      }
+
+      html.dark {
+        --color-background: #121212;
+        --color-surface: #1e1e1e;
+        --color-primary: #8ab4f8;
+        --color-text-main: #e8eaed;
+        --color-text-light: #9aa0a6;
+      }
+      `
+
+  ---
+
+
+  Step 3: Update `ProfileView.vue` Template
+  Now that the colors are defined correctly, we just need to use them. The dark: prefixes are no longer needed because the CSS variables
+  handle the switching automatically.
+
+
+  I will give you the complete, final code for `ProfileView.vue`. Please replace the entire file with this. It includes the icon-only
+  button you wanted.
+
+
+  `vue
+  <template>
+    <div class="p-4 sm:p-6 lg:p-8 font-sans bg-background text-text-main min-h-full">
+      <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <div class="flex justify-between items-center mb-8">
+          <div>
+            <h1 class="text-3xl font-bold">User Profile & Settings</h1>
+            <p class="text-text-light mt-1">Manage your account details and application preferences.</p>
+          </div>
+          <!-- Icon-only Dark Mode Toggle -->
+          <button
+            @click="toggleTheme"
+            class="p-2 rounded-full hover:bg-surface focus:outline-none focus:ring-2 focus:ring-primary"
+            aria-label="Toggle Dark Mode"
+          >
+            <Icon :icon="isDarkMode ? 'ph:sun-bold' : 'ph:moon-bold'" class="h-6 w-6" />
+          </button>
+        </div>
+
+        <!-- Loading State -->
+        <div v-if="isLoading" class="text-center p-12 bg-surface rounded-2xl shadow-md">
+          <p class="text-text-light">Loading your profile...</p>
+        </div>
+
+        <!-- Profile Content -->
+        <div v-else class="max-w-3xl mx-auto">
+          <div class="space-y-8">
+            <!-- Profile Information Card -->
+            <div class="bg-surface rounded-2xl shadow-md p-6">
+              <h2 class="text-xl font-bold mb-6">Profile Information</h2>
+              <div class="flex items-center pb-6 mb-6 border-b border-gray-200 dark:border-white/10">
+                <div class="relative">
+                  <img v-if="profile.photoURL" :src="profile.photoURL" alt="Profile Avatar" class="w-20 h-20 rounded-full object-cover" />
+                  <div v-else class="w-20 h-20 rounded-full bg-primary text-white flex items-center justify-center text-3xl font-bold
+  flex-shrink-0">
+                    {{ avatarInitials }}
+                  </div>
+                </div>
+              </div>
+              <div class="space-y-4">
+                <div>
+                  <label class="block text-sm font-medium text-text-light">Email Address</label>
+                  <input type="email" :value="user?.email" disabled class="mt-1 w-full bg-gray-100 dark:bg-dark-background border-gray-300
+   dark:border-white/20 rounded-lg shadow-sm cursor-not-allowed" />
+                </div>
+                <div>
+                  <label for="displayName" class="block text-sm font-medium text-text-light">Display Name</label>
+                  <input type="text" id="displayName" v-model="profile.displayName" placeholder="e.g., Juan Dela Cruz" class="mt-1 w-full
+  bg-surface border-gray-300 dark:border-white/20 rounded-lg shadow-sm focus:ring-primary focus:border-primary" />
+                </div>
+                <div>
+                  <label for="location" class="block text-sm font-medium text-text-light">Location</label>
+                  <input type="text" id="location" v-model="profile.location" placeholder="e.g., Manila, Philippines" class="mt-1 w-full
+  bg-surface border-gray-300 dark:border-white/20 rounded-lg shadow-sm focus:ring-primary focus:border-primary" />
+                  <p class="text-xs text-gray-500 dark:text-dark-text-light/70 mt-1">This helps in providing more localized
+  recommendations.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Preferences Card -->
+            <div class="bg-surface rounded-2xl shadow-md p-6">
+              <h2 class="text-xl font-bold mb-6">Preferences</h2>
+              <div class="space-y-4">
+                <div class="flex items-center justify-between">
+                  <span class="text-sm font-medium text-text-light">Email Notifications</span>
+                  <button @click="profile.emailNotifications = !profile.emailNotifications" :class="profile.emailNotifications ?
+  'bg-primary' : 'bg-gray-200 dark:bg-white/20'" class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors">
+                    <span :class="profile.emailNotifications ? 'translate-x-6' : 'translate-x-1'" class="inline-block h-4 w-4 transform
+  rounded-full bg-white transition-transform"></span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Save Button -->
+            <div class="flex items-center justify-end gap-4 pt-4">
+              <p v-if="saveStatus" class="text-sm" :class="saveStatus.includes('Error') ? 'text-red-500' : 'text-green-500'">{{ saveStatus
+   }}</p>
+              <button @click="saveProfile" :disabled="isSaving" class="flex items-center justify-center px-6 py-2 bg-primary text-white
+  rounded-lg shadow-sm hover:opacity-90 disabled:opacity-50 disabled:cursor-wait transition-colors">
+                <span v-if="isSaving">Saving...</span>
+                <span v-else>Save Changes</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <script setup>
+  import { ref, onMounted, onUnmounted, computed } from 'vue'
+  import { useRouter } from 'vue-router'
+  import { auth, db } from '@/firebase.js'
+  import { onAuthStateChanged, updateProfile } from 'firebase/auth'
+  import { doc, getDoc, setDoc } from 'firebase/firestore'
+  import { useTheme } from '@/composables/useTheme.js'
+  import { Icon } from '@iconify/vue' // <-- Import Icon component
+
+  const { isDarkMode, toggleTheme } = useTheme()
+  const router = useRouter()
+
+  const user = ref(null)
+  const profile = ref({
+    displayName: '',
+    location: '',
+    emailNotifications: true,
+    photoURL: '',
+  })
+  const isLoading = ref(true)
+  const isSaving = ref(false)
+  const saveStatus = ref('')
+
+  const avatarInitials = computed(() => {
+    const name = profile.value.displayName || user.value?.email || ''
+    return (
+      name
+        .split(' ')
+        .filter(Boolean)
+        .map((n) => n[0]?.toUpperCase())
+        .slice(0, 2)
+        .join('') || '?'
+    )
+  })
+
+  let unsubscribe = null
+  onMounted(() => {
+    unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      if (currentUser) {
+        user.value = currentUser
+        await fetchUserProfile(currentUser.uid)
+      } else {
+        router.push('/login')
+      }
+      isLoading.value = false
+    })
+  })
+
+  onUnmounted(() => {
+    unsubscribe?.()
+  })
+
+  const fetchUserProfile = async (uid) => {
+    try {
+      const userDocRef = doc(db, 'users', uid)
+      const docSnap = await getDoc(userDocRef)
+      if (docSnap.exists()) {
+        profile.value = { ...profile.value, ...docSnap.data() }
+      } else {
+        profile.value.displayName = user.value?.displayName || ''
+        profile.value.photoURL = user.value?.photoURL || ''
+      }
+    } catch (error) {
+      console.error('Error fetching user profile:', error)
+      saveStatus.value = 'Error: Could not load profile.'
+    }
+  }
+
+  const saveProfile = async () => {
+    if (!user.value) return
+    if (!profile.value.displayName.trim()) {
+      saveStatus.value = 'Error: Display name cannot be empty.'
+      return
     }
 
-    unsubscribeRef = historyRef;
-
-    onValue(historyQuery, (snap) => {
-      if (!snap.exists()) {
-        chartData.value.labels = [];
-        chartData.value.datasets.forEach(ds => ds.data = []);
-      } else {
-        const records = Object.values(snap.val());
-        const { labels, temp, hum, rain } = processRecords(records, range);
-        chartData.value = {
-          labels,
-          datasets: [
-            { ...chartData.value.datasets[0], data: temp },
-            { ...chartData.value.datasets[1], data: hum },
-            { ...chartData.value.datasets[2], data: rain },
-          ],
-        };
+    isSaving.value = true
+    saveStatus.value = ''
+    try {
+      if (auth.currentUser && auth.currentUser.displayName !== profile.value.displayName) {
+        await updateProfile(auth.currentUser, {
+          displayName: profile.value.displayName,
+        })
       }
-      isLoading.value = false;
-    }, (error) => {
-      console.error('Firebase onValue error:', error);
-      isLoading.value = false;
-    });
-  };
-  `
 
-  This change will make your charts load quickly for all time ranges.
+      const { displayName, location, emailNotifications } = profile.value
+      const userDocRef = doc(db, 'users', user.value.uid)
+      await setDoc(userDocRef, { displayName, location, emailNotifications }, { merge: true })
 
-  ---
-
-
-  Solution 2: The Best Practice (Backend Aggregation)
-  For the long-term health of your application, the best solution is to have a backend process that pre-calculates daily and monthly
-  summaries.
-
-
-   * You would create a Cloud Function in Firebase.
-  This is more complex to set up but is the standard way to handle large datasets.
-
-  ### Recommendation
-
-
-  For now, I strongly recommend you implement Solution 1 (Indexing and Limiting). It will immediately solve your loading problem and make the
-   app feel fast.
-
-
-  Would you like me to apply the code change from Solution 1 for you?
-
-╭─────────────────────────────────╮
-│  > I want a long term solution  │
-╰─────────────────────────────────╯
-
-✦ Excellent choice. Building a scalable, long-term solution is the professional way to handle this, and it will make your application robust
-  and fast, no matter how much data it collects.
-
-
-  The core of the long-term solution is to stop making the user's browser do heavy data processing. Instead, we will use a Firebase Cloud 
-  Function, which is a small piece of code that runs on Google's servers, to do the work for us automatically.
-
-  ### The High-Level Plan
-
-  Here's the strategy:
-
-
-   1. Create a New Data Structure: We will create new locations in your database called /daily_summaries/ and /monthly_summaries/. These
-      will store pre-calculated averages.
-  Before we can write the code, we need to prepare your project.
-
-
-  A) Upgrade to the Blaze Plan:
-  Cloud Functions require the "Blaze" (Pay-as-you-go) plan. Don't worry, the free tier is so generous you are unlikely to pay anything for 
-  this project.
-     The free tier includes 2 million Cloud Function invocations per month*, which is far more than you will use.
-  *   You need to upgrade because the function needs to make network requests, which is a billable feature (even if it's free within the free
-   tier).
-  *   Go to your Firebase Console, click the gear icon next to "Project Overview," go to "Usage and billing," and select the Blaze plan.
-
-
-  B) Install Firebase CLI:
-  If you haven't already, you need the Firebase command-line tools to deploy functions.
-  In your terminal, run:
-  `bash
-  npm install -g firebase-tools
+      saveStatus.value = 'Profile saved successfully!'
+    } catch (error) {
+      console.error('Error saving user profile:', error.code, error.message)
+      saveStatus.value = Error: Could not save profile. (${error.code})
+    } finally {
+      isSaving.value = false
+      setTimeout(() => (saveStatus.value = ''), 3000)
+    }
+  }
+  </script>
   `
 
 
-  C) Initialize Firebase Functions:
-  1.  Navigate to your project's root directory (C:\Users\PC\Desktop\weather-monitoring-system) in your terminal.
-  2.  Log in to Firebase by running: firebase login
-  3.  Initialize the functions feature by running: firebase init functions
-  4.  Follow the prompts:
-         `Please select an option:` Use an existing project*
-      *   Select your weather-monitoring-system project.
-         `What language would you like to use?` JavaScript*
-         `Do you want to use ESLint...?` Yes*
-         `Do you want to install dependencies with npm now?` Yes*
 
-  This will create a new functions folder in your project. This is where our backend code will live.
+  After making these changes and restarting your server, your dark mode will function correctly, and you will have a nice icon button to
+  control it.
 
-  ---
+╭────────────────────────────────────────╮
+│  > just give me all the complete code  │
+╰────────────────────────────────────────╯
 
-  ### Step 2: The Cloud Function Code
+✦ Of course. Here is the complete and final code for all the files you need to change.
+
+  Instructions:
 
 
-  Now, we'll write the function that performs the daily aggregation.
-
-  File to Edit: functions/index.js (this file was just created).
-
-
-  Replace the entire content of functions/index.js with the following code:
-
-
+   1. For each file path listed below, open that file in your code editor.
+  1. dashboard/weather-dashboard/tailwind.config.js
   `javascript
-  const functions = require("firebase-functions");
-  const admin = require("firebase-admin");
-
-  admin.initializeApp();
-
-  /**
-   * A Cloud Function that runs every day at 1:00 AM (Asia/Manila time)
-   * to aggregate the previous day's sensor logs into a single summary.
-   */
-  exports.aggregateDailySensorData = functions.pubsub
-    .schedule("every day 01:00")
-    .timeZone("Asia/Manila") // Set to your local timezone
-    .onRun(async (context) => {
-      const db = admin.database();
-      const sourceRef = db.ref("/sensor_logs");
-      const targetRef = db.ref("/daily_summaries");
-
-      // 1. Determine the date range for "yesterday"
-      const now = new Date();
-      const yesterday = new Date(now.setDate(now.getDate() - 1));
-      const year = yesterday.getFullYear();
-      const month = String(yesterday.getMonth() + 1).padStart(2, "0");
-      const day = String(yesterday.getDate()).padStart(2, "0");
-      const targetId = ${year}-${month}-${day};
-
-      const startOfDay = new Date(year, yesterday.getMonth(), day, 0, 0, 0).getTime();
-      const endOfDay = new Date(year, yesterday.getMonth(), day, 23, 59, 59).getTime();
-
-      functions.logger.info(Aggregating data for: ${targetId});
-
-      // 2. Query all sensor logs from yesterday
-      const snapshot = await sourceRef
-        .orderByChild("timestamp")
-        .startAt(startOfDay)
-        .endAt(endOfDay)
-        .once("value");
-
-      if (!snapshot.exists()) {
-        functions.logger.warn(No data found for ${targetId}.);
-        return null;
-      }
-
-      const logs = snapshot.val();
-      const logValues = Object.values(logs);
-      const count = logValues.length;
-
-      // 3. Calculate the aggregates
-      let tempSum = 0;
-      let humiditySum = 0;
-      let rainfallSum = 0;
-
-      logValues.forEach((log) => {
-        tempSum += log.temperature || 0;
-        humiditySum += log.humidity || 0;
-        rainfallSum += log.rainfall || 0;
-      });
-
-      const dailySummary = {
-        timestamp: startOfDay,
-        avg_temp: tempSum / count,
-        avg_humidity: humiditySum / count,
-        total_rainfall: rainfallSum,
-        log_count: count,
-      };
-
-      // 4. Save the summary to the new location
-      await targetRef.child(targetId).set(dailySummary);
-
-      functions.logger.info(Successfully created summary for ${targetId} with ${count} records.);
-      return null;
-    });
+  /** @type {import('tailwindcss').Config} */
+  export default {
+    content: ['./index.html', './src/**/*.{vue,js,ts,jsx,tsx}'],
+    darkMode: 'class',
+    theme: {
+      extend: {
+        colors: {
+          // These are now CSS variables controlled by base.css
+          background: 'var(--color-background)',
+          surface: 'var(--color-surface)',
+          primary: 'var(--color-primary)',
+          'text-main': 'var(--color-text-main)',
+          'text-light': 'var(--color-text-light)',
+        },
+        animation: {
+          'pulse-fast': 'pulse 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+        },
+      },
+    },
+    plugins: [],
+  }
   `
-
-
-  Step 3: Deploy the Function
-   1. Open your terminal in the functions directory.
-  After a few minutes, your function will be live and will run automatically every night.
 
   ---
 
 
-  This completes the backend part of the long-term solution. The final step is to update your Vue app to use this new, efficient data.
+  2. dashboard/weather-dashboard/src/assets/base.css
+  `css
+  / color palette from <https://github.com/vuejs/theme> /
+  :root {
+    --vt-c-white: #ffffff;
+    --vt-c-white-soft: #f8f8f8;
+    --vt-c-white-mute: #f2f2f2;
+
+    --vt-c-black: #181818;
+    --vt-c-black-soft: #222222;
+    --vt-c-black-mute: #282828;
+
+    --vt-c-indigo: #2c3e50;
+
+    --vt-c-divider-light-1: rgba(60, 60, 60, 0.29);
+    --vt-c-divider-light-2: rgba(60, 60, 60, 0.12);
+    --vt-c-divider-dark-1: rgba(84, 84, 84, 0.65);
+    --vt-c-divider-dark-2: rgba(84, 84, 84, 0.48);
+
+    --vt-c-text-light-1: var(--vt-c-indigo);
+    --vt-c-text-light-2: rgba(60, 60, 60, 0.66);
+    --vt-c-text-dark-1: var(--vt-c-white);
+    --vt-c-text-dark-2: rgba(235, 235, 235, 0.64);
+  }
+
+  / semantic color variables /
+  :root {
+    --color-background: #f8f9fa;
+    --color-surface: #ffffff;
+    --color-primary: #1a73e8;
+    --color-text-main: #202124;
+    --color-text-light: #5f6368;
+
+    --color-heading: var(--vt-c-text-light-1);
+    --color-text: var(--vt-c-text-light-1);
+
+    --section-gap: 160px;
+  }
+
+  html.dark {
+    --color-background: #121212;
+    --color-surface: #1e1e1e;
+    --color-primary: #8ab4f8;
+    --color-text-main: #e8eaed;
+    --color-text-light: #9aa0a6;
+  }
+
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+    margin: 0;
+    font-weight: normal;
+  }
+
+  body {
+    min-height: 100vh;
+    color: var(--color-text);
+    background: var(--color-background);
+    transition:
+      color 0.5s,
+      background-color 0.5s;
+    line-height: 1.6;
+    font-family:
+      Inter,
+      -apple-system,
+      BlinkMacSystemFont,
+      'Segoe UI',
+      Roboto,
+      Oxygen,
+      Ubuntu,
+      Cantarell,
+      'Fira Sans',
+      'Droid Sans',
+      'Helvetica Neue',
+      sans-serif;
+    font-size: 15px;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  `
+
+  ---
 
 
-  Are you ready to proceed with updating `ChartsView.vue`?
+  3. dashboard/weather-dashboard/src/views/ProfileView.vue
+  `vue
+  <template>
+    <div class="p-4 sm:p-6 lg:p-8 font-sans bg-background text-text-main min-h-full">
+      <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <div class="flex justify-between items-start mb-8">
+          <div>
+            <h1 class="text-3xl font-bold">User Profile & Settings</h1>
+            <p class="text-text-light mt-1">Manage your account details and application preferences.</p>
+          </div>
+          <!-- Icon-only Dark Mode Toggle -->
+          <button
+            @click="toggleTheme"
+            class="p-2 rounded-full text-text-light hover:bg-surface focus:outline-none focus:ring-2 focus:ring-offset-2
+  focus:ring-offset-background focus:ring-primary"
+            aria-label="Toggle Dark Mode"
+          >
+            <Icon :icon="isDarkMode ? 'ph:sun-bold' : 'ph:moon-bold'" class="h-6 w-6" />
+          </button>
+        </div>
 
-╭──────────────────────────────────────────────────╮
-│  > aside from that, can you suggest a solution?  │
-╰──────────────────────────────────────────────────╯
+        <!-- Loading State -->
+        <div v-if="isLoading" class="text-center p-12 bg-surface rounded-2xl shadow-md">
+          <p class="text-text-light">Loading your profile...</p>
+        </div>
 
-✕ [API Error: got status: UNAVAILABLE. {"error":{"code":503,"message":"The model is overloaded. Please try again 
-  later.","status":"UNAVAILABLE"}}]
+        <!-- Profile Content -->
+        <div v-else class="max-w-3xl mx-auto">
+          <div class="space-y-8">
+            <!-- Profile Information Card -->
+            <div class="bg-surface rounded-2xl shadow-md p-6">
+              <h2 class="text-xl font-bold mb-6">Profile Information</h2>
+              <div class="flex items-center pb-6 mb-6 border-b border-gray-200 dark:border-white/10">
+                <div class="relative">
+                  <img v-if="profile.photoURL" :src="profile.photoURL" alt="Profile Avatar" class="w-20 h-20 rounded-full object-cover" />
+                  <div v-else class="w-20 h-20 rounded-full bg-primary text-white flex items-center justify-center text-3xl font-bold
+  flex-shrink-0">
+                    {{ avatarInitials }}
+                  </div>
+                </div>
+              </div>
+              <div class="space-y-4">
+                <div>
+                  <label class="block text-sm font-medium text-text-light">Email Address</label>
+                  <input type="email" :value="user?.email" disabled class="mt-1 w-full bg-background border-gray-300 dark:border-white/20
+  rounded-lg shadow-sm cursor-not-allowed text-text-light" />
+                </div>
+                <div>
+                  <label for="displayName" class="block text-sm font-medium text-text-light">Display Name</label>
+                  <input type="text" id="displayName" v-model="profile.displayName" placeholder="e.g., Juan Dela Cruz" class="mt-1 w-full
+  bg-surface border-gray-300 dark:border-white/20 rounded-lg shadow-sm focus:ring-primary focus:border-primary" />
+                </div>
+                <div>
+                  <label for="location" class="block text-sm font-medium text-text-light">Location</label>
+                  <input type="text" id="location" v-model="profile.location" placeholder="e.g., Manila, Philippines" class="mt-1 w-full
+  bg-surface border-gray-300 dark:border-white/20 rounded-lg shadow-sm focus:ring-primary focus:border-primary" />
+                  <p class="text-xs text-gray-500 dark:text-dark-text-light/70 mt-1">This helps in providing more localized
+  recommendations.</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Preferences Card -->
+            <div class="bg-surface rounded-2xl shadow-md p-6">
+              <h2 class="text-xl font-bold mb-6">Preferences</h2>
+              <div class="space-y-4">
+                <div class="flex items-center justify-between">
+                  <span class="text-sm font-medium text-text-light">Email Notifications</span>
+                  <button @click="profile.emailNotifications = !profile.emailNotifications" :class="profile.emailNotifications ?
+  'bg-primary' : 'bg-gray-200 dark:bg-white/20'" class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors">
+                    <span :class="profile.emailNotifications ? 'translate-x-6' : 'translate-x-1'" class="inline-block h-4 w-4 transform
+  rounded-full bg-white transition-transform"></span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Save Button -->
+            <div class="flex items-center justify-end gap-4 pt-4">
+              <p v-if="saveStatus" class="text-sm" :class="saveStatus.includes('Error') ? 'text-red-500' : 'text-green-500'">{{ saveStatus
+   }}</p>
+              <button @click="saveProfile" :disabled="isSaving" class="flex items-center justify-center px-6 py-2 bg-primary text-white
+  rounded-lg shadow-sm hover:opacity-90 disabled:opacity-50 disabled:cursor-wait transition-colors">
+                <span v-if="isSaving">Saving...</span>
+                <span v-else>Save Changes</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <script setup>
+  import { ref, onMounted, onUnmounted, computed } from 'vue'
+  import { useRouter } from 'vue-router'
+  import { auth, db } from '@/firebase.js'
+  import { onAuthStateChanged, updateProfile } from 'firebase/auth'
+  import { doc, getDoc, setDoc } from 'firebase/firestore'
+  import { useTheme } from '@/composables/useTheme.js'
+  import { Icon } from '@iconify/vue'
+
+  const { isDarkMode, toggleTheme } = useTheme()
+  const router = useRouter()
+
+  const user = ref(null)
+  const profile = ref({
+    displayName: '',
+    location: '',
+    emailNotifications: true,
+    photoURL: '',
+  })
+  const isLoading = ref(true)
+  const isSaving = ref(false)
+  const saveStatus = ref('')
+
+  const avatarInitials = computed(() => {
+    const name = profile.value.displayName || user.value?.email || ''
+    return (
+      name
+        .split(' ')
+        .filter(Boolean)
+        .map((n) => n[0]?.toUpperCase())
+        .slice(0, 2)
+        .join('') || '?'
+    )
+  })
+
+  let unsubscribe = null
+  onMounted(() => {
+    unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      if (currentUser) {
+        user.value = currentUser
+        await fetchUserProfile(currentUser.uid)
+      } else {
+        router.push('/login')
+      }
+      isLoading.value = false
+    })
+  })
+
+  onUnmounted(() => {
+    unsubscribe?.()
+  })
+
+  const fetchUserProfile = async (uid) => {
+    try {
+      const userDocRef = doc(db, 'users', uid)
+      const docSnap = await getDoc(userDocRef)
+      if (docSnap.exists()) {
+        profile.value = { ...profile.value, ...docSnap.data() }
+      } else {
+        profile.value.displayName = user.value?.displayName || ''
+        profile.value.photoURL = user.value?.photoURL || ''
+      }
+    } catch (error) {
+      console.error('Error fetching user profile:', error)
+      saveStatus.value = 'Error: Could not load profile.'
+    }
+  }
+
+  const saveProfile = async () => {
+    if (!user.value) return
+    if (!profile.value.displayName.trim()) {
+      saveStatus.value = 'Error: Display name cannot be empty.'
+      return
+    }
+
+    isSaving.value = true
+    saveStatus.value = ''
+    try {
+      if (auth.currentUser && auth.currentUser.displayName !== profile.value.displayName) {
+        await updateProfile(auth.currentUser, {
+          displayName: profile.value.displayName,
+        })
+      }
+
+      const { displayName, location, emailNotifications } = profile.value
+      const userDocRef = doc(db, 'users', user.value.uid)
+      await setDoc(userDocRef, { displayName, location, emailNotifications }, { merge: true })
+      await setDoc(userDocRef, { displayName, location, emailNotifications }, { merge: true })
+
+
+      saveStatus.value = 'Profile saved successfully!'
+    } catch (error) {
+    } catch (error) {
+      console.error('Error saving user profile:', error.code, error.message)
+      saveStatus.value = Error: Could not save profile. (${error.code})
+    } finally {
+      console.error('Error saving user profile:', error.code, error.message)
+      saveStatus.value = Error: Could not save profile. (${error.code})
+    } finally {
+      isSaving.value = false
+      saveStatus.value = Error: Could not save profile. (${error.code})
+    } finally {
+      isSaving.value = false
+      isSaving.value = false
+      setTimeout(() => (saveStatus.value = ''), 3000)
+    }
+      setTimeout(() => (saveStatus.value = ''), 3000)
+    }
+    }
+  }
+  }
+  </script>
+  </script>
+  `
+
+
+
+  After replacing the content of these three files and restarting your server, the dark mode feature will be fully functional and will
+  use an icon button.
+
+Using: 6 open files (ctrl+g to view)
+╭────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ >   Type your message or @path/to/file                                                                                                 │
+╰────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+
+
+  After replacing the content of these three files and restarting your server, the dark mode feature will be fully functional and will
+  use an icon button.
+
+
+
+
+
+
+
+  After replacing the content of these three files and restarting your server, the dark mode feature will be fully functional and will
+  use an icon button.
+
+Using: 6 open files (ctrl+g to view)
+╭────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ >   Type your message or @path/to/file                                                                                                 │
+╰────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+~\Desktop\weather-monitoring-system           no sandbox (see       gemini-2.5-pro (93% context        | ✖ 15 errors (ctrl+o for
+(main*)                                       /docs)               left)                                 details)
 
 
 
@@ -999,9 +902,109 @@
 
 
 
-╭──────────────────────────────────────────────────╮
-│  > aside from that, can you suggest a solution?  │
-╰──────────────────────────────────────────────────╯
 
-✕ [API Error: got status: UNAVAILABLE. {"error":{"code":503,"message":"The model is overloaded. Please try again 
-  later.","status":"UNAVAILABLE"}}]
+
+
+
+  After replacing the content of these three files and restarting your server, the dark mode feature will be fully functional and will
+  use an icon button.
+
+Using: 6 open files (ctrl+g to view)
+╭────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ >   Type your message or @path/to/file                                                                                                 │
+╰────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+~\Desktop\weather-monitoring-system           no sandbox (see       gemini-2.5-pro (93% context        | ✖ 15 errors (ctrl+o for
+(main*)                                       /docs)               left)                                 details)
+
+
+
+
+
+
+
+
+
+
+
+  After replacing the content of these three files and restarting your server, the dark mode feature will be fully functional and will
+  use an icon button.
+
+Using: 6 open files (ctrl+g to view)
+╭────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ >   Type your message or @path/to/file                                                                                                 │
+╰────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+~\Desktop\weather-monitoring-system           no sandbox (see       gemini-2.5-pro (93% context        | ✖ 15 errors (ctrl+o for
+(main*)                                       /docs)               left)                                 details)
+
+
+
+  After replacing the content of these three files and restarting your server, the dark mode feature will be fully functional and will
+
+
+
+
+  After replacing the content of these three files and restarting your server, the dark mode feature will be fully functional and will
+  use an icon button.
+ ╭─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+ │ ✓  ReadManyFiles Will attempt to read and concatenate files using patterns:…                                                    │
+ │                                                                                                                                 │
+ │                                                                                                                                 │
+ │    ### ReadManyFiles Result (Target Dir: `C:\Users\PC\Desktop\weather-monitoring-system`)                                       │
+ │                                                                                                                                 │
+ │    Successfully read and concatenated content from **3 file(s)**.                                                               │
+ │                                                                                                                                 │
+ │    **Processed Files:**                                                                                                         │
+ │    - `dashboard/weather-dashboard/src/assets/base.css`                                                                          │
+ │    - `dashboard/weather-dashboard/src/views/ProfileView.vue`                                                                    │
+ │    - `dashboard/weather-dashboard/tailwind.config.js`                                                                           │
+ ╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
+╭──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮    
+│  > check this codes first @dashboard/weather-dashboard/tailwind.config.js @dashboard/weather-dashboard/src/assets/base.css   │    
+│    @dashboard/weather-dashboard/src/views/ProfileView.vue                                                                    │    
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯    
+
+✦ Thank you for providing the code. I have reviewed the files you've updated.
+
+
+  You are very close.
+
+
+   * tailwind.config.js is now correct.
+  The only remaining problem is in ProfileView.vue. It is still using the old dark: variant classes (e.g., dark:bg-dark-surface), which   
+  no longer exist because the new CSS variables handle the theme switching automatically.
+
+  Also, the icon button you wanted is not yet in the code.
+
+
+  You have already done the hardest parts. The final step is to replace the code in ProfileView.vue one last time with the version that   
+  uses the new color system and the icon button.
+
+
+  You have already done the hardest parts. The final step is to replace the code in ProfileView.vue one last time with the version that
+  uses the new color system and the icon button.
+
+  uses the new color system and the icon button.
+
+
+
+  Please proceed with replacing the entire content of dashboard/weather-dashboard/src/views/ProfileView.vue with the final version I
+  provided in my previous message. Once you do that and restart your server, it will work perfectly.
+
+╭──────────────────────────────────────────────────────╮
+│  > give me the complete updated code of profileview  │
+╰──────────────────────────────────────────────────────╯
+
+✕ [API Error: {"error":{"message":"{\n  \"error\": {\n    \"code\": 429,\n    \"message\": \"You exceeded your current quota, please check  
+  your plan and billing details. For more information on this error, head to: https://ai.google.dev/gemini-api/docs/rate-limits.\\n* Quota  
+  exceeded for metric: generativelanguage.googleapis.com/generate_content_free_tier_requests, limit: 50\\nPlease retry in 4.8815968s.\",\n  
+    \"status\": \"RESOURCE_EXHAUSTED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/google.rpc.QuotaFailure\",\n
+         \"violations\": [\n          {\n            \"quotaMetric\":
+  \"generativelanguage.googleapis.com/generate_content_free_tier_requests\",\n            \"quotaId\":
+  \"GenerateRequestsPerDayPerProjectPerModel-FreeTier\",\n            \"quotaDimensions\": {\n              \"model\": \"gemini-2.5-pro\",\n
+                \"location\": \"global\"\n            },\n            \"quotaValue\": \"50\"\n          }\n        ]\n      },\n      {\n
+       \"@type\": \"type.googleapis.com/google.rpc.Help\",\n        \"links\": [\n          {\n            \"description\": \"Learn more
+  about Gemini API quotas\",\n            \"url\": \"https://ai.google.dev/gemini-api/docs/rate-limits\"\n          }\n        ]\n      },\n
+        {\n        \"@type\": \"type.googleapis.com/google.rpc.RetryInfo\",\n        \"retryDelay\": \"4s\"\n      }\n    ]\n
+  }\n}\n","code":429,"status":"Too Many Requests"}}]
+  Please wait and try again later. To increase your limits, request a quota increase through AI Studio, or switch to another /auth method

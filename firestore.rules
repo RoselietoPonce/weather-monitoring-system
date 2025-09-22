@@ -1,0 +1,29 @@
+ rules_version = '2';
+      service cloud.firestore {
+        match /databases/{database}/documents {
+
+          // This is the rule for the global alert settings.
+          // It allows any authenticated user to change them.
+          match /alerts/thresholds {
+            allow read: if true;
+            allow write: if request.auth != null;
+          }
+
+          // This rule allows your ESP32 sensor to send new data.
+          // It also allows your logged-in users to read the data for charts.
+          match /weather_data/{dataId} {
+            allow read: if request.auth != null;
+            allow create: if true; // Allows the ESP32 to write new data
+          }
+
+          // This rule allows logged-in users to see the alert history.
+          match /alerts_history/{historyId} {
+            allow read: if request.auth != null;
+            allow write: if false; // Nobody can change the history from the website
+          }
+          // This rule is the one that fixes the problem
+          match /users/{userId} {
+            allow read, write: if request.auth.uid == userId;
+          }
+        }
+      }

@@ -1,8 +1,10 @@
 <template>
-    <router-view />
-  </template>
+  <router-view />
+</template>
 
-  <script setup>
-  // All layout and auth logic is now handled by the router and MainLayout.vue
-  // This component's only job is to render the view determined by the router.
-  </script>
+<script setup>
+import { useTheme } from '@/composables/useTheme.js'
+
+// Initialize the theme manager to apply the theme on app load
+useTheme()
+</script>

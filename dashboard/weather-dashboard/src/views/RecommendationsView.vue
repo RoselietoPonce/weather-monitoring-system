@@ -2,37 +2,25 @@
   <div class="p-4 sm:p-6 lg:p-8 font-sans">
     <div class="max-w-7xl mx-auto">
       <!-- Header -->
-      <div class="mb-8">
-        <h1 class="text-3xl font-bold text-gray-800">Recommendations</h1>
-        <p class="text-gray-600 mt-1">
+      <div class="mb-10">
+        <h1 class="text-4xl font-bold text-text-main tracking-tight">Recommendations</h1>
+        <p class="text-text-light mt-2">
           Generate actionable insights based on the latest weather data.
         </p>
       </div>
 
       <!-- Control and Current Data Panel -->
       <div class="bg-white rounded-2xl shadow-md p-6 mb-8">
-        <div
-          class="flex flex-col sm:flex-row items-center justify-between gap-6"
-        >
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-6">
           <div class="flex-1">
             <h2 class="text-xl font-bold text-gray-800">Analysis Input</h2>
-            <p class="text-gray-600 mt-1">
-              Using the latest sensor readings to generate insights:
-            </p>
+            <p class="text-gray-600 mt-1">Using the latest sensor readings to generate insights:</p>
 
             <!-- Current Data Display -->
-            <div v-if="isDataLoading" class="mt-4 text-gray-500">
-              Fetching latest data...
-            </div>
-            <div
-              v-else-if="latestData"
-              class="mt-4 grid grid-cols-2 md:grid-cols-3 gap-4 text-sm"
-            >
+            <div v-if="isDataLoading" class="mt-4 text-gray-500">Fetching latest data...</div>
+            <div v-else-if="latestData" class="mt-4 grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
               <div class="flex items-center gap-2">
-                <Icon
-                  icon="ph:thermometer-bold"
-                  class="h-5 w-5 text-red-500"
-                />
+                <Icon icon="ph:thermometer-bold" class="h-5 w-5 text-red-500" />
                 <span class="text-gray-700">
                   Temp:
                   <strong>{{ latestData.temperature.toFixed(1) }}°C</strong>
@@ -46,30 +34,24 @@
                 </span>
               </div>
               <div class="flex items-center gap-2">
-                <Icon
-                  icon="ph:cloud-rain-bold"
-                  class="h-5 w-5 text-cyan-500"
-                />
+                <Icon icon="ph:cloud-rain-bold" class="h-5 w-5 text-cyan-500" />
                 <span class="text-gray-700">
                   Rainfall:
                   <strong>{{ latestData.rainfall.toFixed(1) }} mm</strong>
                 </span>
               </div>
             </div>
-            <div v-else class="mt-4 text-red-500">
-              Could not load latest data.
-            </div>
+            <div v-else class="mt-4 text-red-500">Could not load latest data.</div>
           </div>
 
           <!-- Button -->
           <button
             @click="handleGenerate"
             :disabled="isGenerating || isDataLoading || !latestData"
-            class="w-full sm:w-auto flex items-center justify-center px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg
-              shadow-sm hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+            class="w-full sm:w-auto flex items-center justify-center px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-sm hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
           >
             <Icon icon="ph:sparkle-bold" class="h-5 w-5 mr-2" />
-            {{ isGenerating ? "Analyzing..." : "Regenerate" }}
+            {{ isGenerating ? 'Analyzing...' : 'Regenerate' }}
           </button>
         </div>
       </div>
@@ -78,11 +60,7 @@
       <div>
         <!-- Loading Skeleton -->
         <div v-if="isGenerating" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div
-            v-for="n in 2"
-            :key="n"
-            class="bg-white rounded-2xl shadow-md p-6 animate-pulse"
-          >
+          <div v-for="n in 2" :key="n" class="bg-white rounded-2xl shadow-md p-6 animate-pulse">
             <div class="flex items-center mb-3">
               <div class="h-10 w-10 rounded-full bg-gray-200"></div>
               <div class="ml-4 h-6 w-1/2 rounded bg-gray-200"></div>
@@ -145,118 +123,112 @@
 </template>
 
 <script setup>
-import { ref, watch } from "vue";
-import { rtdb } from "@/firebase.js";
-import {
-  query,
-  ref as dbRef,
-  orderByChild,
-  get,
-  startAt,
-} from "firebase/database";
-import { Icon } from "@iconify/vue";
-import { useWeatherData } from "@/composables/useWeatherData.js";
+import { ref, watch } from 'vue'
+import { rtdb } from '@/firebase.js'
+import { query, ref as dbRef, orderByChild, get, startAt } from 'firebase/database'
+import { Icon } from '@iconify/vue'
+import { useWeatherData } from '@/composables/useWeatherData.js'
 
 // --- CONFIGURATION ---
-const GEMINI_API_KEY = "AIzaSyD0qDNzCaAvWc0skFlIZftZjYvBw1pUSeA";
-const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`;
+const GEMINI_API_KEY = 'AIzaSyD0qDNzCaAvWc0skFlIZftZjYvBw1pUSeA'
+const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`
 
 const props = defineProps({
   deviceAddress: {
     type: String,
-    default: "Philippines",
+    default: 'Philippines',
   },
-});
+})
 
-const { latestData, isLoading: isDataLoading } = useWeatherData();
+const { latestData, isLoading: isDataLoading } = useWeatherData()
 
-const historicalSummary = ref(null);
-const recommendations = ref([]);
-const isGenerating = ref(true);
-const generationError = ref(null);
+const historicalSummary = ref(null)
+const recommendations = ref([])
+const isGenerating = ref(true)
+const generationError = ref(null)
 
 // --- Fetch historical rainfall data ---
 const fetchHistoricalData = async () => {
   try {
-    const oneDayAgo = new Date().getTime() - 24 * 60 * 60 * 1000;
+    const oneDayAgo = new Date().getTime() - 24 * 60 * 60 * 1000
     const historicalQuery = query(
-      dbRef(rtdb, "sensor_logs"),
-      orderByChild("timestamp"),
-      startAt(oneDayAgo)
-    );
-    const historicalSnapshot = await get(historicalQuery);
+      dbRef(rtdb, 'sensor_logs'),
+      orderByChild('timestamp'),
+      startAt(oneDayAgo),
+    )
+    const historicalSnapshot = await get(historicalQuery)
 
-    let totalRainfall = 0;
+    let totalRainfall = 0
     if (historicalSnapshot.exists()) {
       Object.values(historicalSnapshot.val()).forEach((log) => {
-        if (log.rainfall != null) totalRainfall += log.rainfall;
-      });
+        if (log.rainfall != null) totalRainfall += log.rainfall
+      })
     }
-    historicalSummary.value = { totalRainfall24h: totalRainfall };
-    return true;
+    historicalSummary.value = { totalRainfall24h: totalRainfall }
+    return true
   } catch (err) {
-    console.error("Error fetching historical data:", err);
-    generationError.value = "Could not fetch historical data for analysis.";
-    return false;
+    console.error('Error fetching historical data:', err)
+    generationError.value = 'Could not fetch historical data for analysis.'
+    return false
   }
-};
+}
 
 // --- Gemini API Call ---
 const generateAIAssistantResponse = async (prompt) => {
-  if (!GEMINI_API_KEY || GEMINI_API_KEY === "YOUR_GEMINI_API_KEY") {
-    throw new Error("Gemini API key is not set. Please add it in the script.");
+  if (!GEMINI_API_KEY || GEMINI_API_KEY === 'YOUR_GEMINI_API_KEY') {
+    throw new Error('Gemini API key is not set. Please add it in the script.')
   }
 
-  const payload = { contents: [{ parts: [{ text: prompt }] }] };
+  const payload = { contents: [{ parts: [{ text: prompt }] }] }
 
   const response = await fetch(GEMINI_API_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
-  });
+  })
 
   if (!response.ok) {
-    let errorDetails = `API request failed with status ${response.status}.`;
+    let errorDetails = `API request failed with status ${response.status}.`
     try {
-      const errorBody = await response.json();
-      console.error("Gemini API Error:", errorBody);
-      const message = errorBody.error?.message || JSON.stringify(errorBody);
-      errorDetails += ` Details: ${message}`;
-    } catch (e) {
-      const textResponse = await response.text();
-      console.error("Gemini API Error (non-JSON response):", textResponse);
-      errorDetails += ` Non-JSON response: ${textResponse}`;
+      const errorBody = await response.json()
+      console.error('Gemini API Error:', errorBody)
+      const message = errorBody.error?.message || JSON.stringify(errorBody)
+      errorDetails += ` Details: ${message}`
+    } catch {
+      const textResponse = await response.text()
+      console.error('Gemini API Error (non-JSON response):', textResponse)
+      errorDetails += ` Non-JSON response: ${textResponse}`
     }
-    throw new Error(errorDetails);
+    throw new Error(errorDetails)
   }
 
-  const data = await response.json();
+  const data = await response.json()
   if (!data.candidates?.[0]?.content?.parts?.[0]?.text) {
-    throw new Error("Invalid Gemini API response format");
+    throw new Error('Invalid Gemini API response format')
   }
-  return data.candidates[0].content.parts[0].text;
-};
+  return data.candidates[0].content.parts[0].text
+}
 
 // --- Generate recommendations ---
 const handleGenerate = async () => {
   if (!latestData.value) {
-    generationError.value = "Cannot generate insights without current data.";
-    return;
+    generationError.value = 'Cannot generate insights without current data.'
+    return
   }
 
-  isGenerating.value = true;
-  recommendations.value = [];
-  generationError.value = null;
+  isGenerating.value = true
+  recommendations.value = []
+  generationError.value = null
 
-  const historicalDataFetched = await fetchHistoricalData();
+  const historicalDataFetched = await fetchHistoricalData()
   if (!historicalDataFetched) {
-    isGenerating.value = false;
-    return;
+    isGenerating.value = false
+    return
   }
 
   try {
-    const currentDate = new Date();
-    const month = currentDate.toLocaleString("en-US", { month: "long" });
+    const currentDate = new Date()
+    const month = currentDate.toLocaleString('en-US', { month: 'long' })
 
     const prompt = `
       Persona: You are a senior agricultural and disaster-preparedness advisor from PAGASA.
@@ -275,43 +247,42 @@ const handleGenerate = async () => {
       1. Categorize each as "Crop Management", "Health & Safety", or "Typhoon Preparedness".
       2. Provide expert rationale referencing the data.
       3. Format: Valid JSON array of { "category": string, "recommendation": string }.
-    `;
+    `
 
-    const rawResponse = await generateAIAssistantResponse(prompt);
+    const rawResponse = await generateAIAssistantResponse(prompt)
     const cleanedResponse = rawResponse
-      .replace(/```json/g, "")
-      .replace(/```/g, "")
-      .trim();
+      .replace(/```json/g, '')
+      .replace(/```/g, '')
+      .trim()
 
-    recommendations.value = JSON.parse(cleanedResponse);
+    recommendations.value = JSON.parse(cleanedResponse)
   } catch (err) {
-    console.error("Error generating recommendations:", err);
-    generationError.value = `An error occurred: ${err.message}`;
+    console.error('Error generating recommendations:', err)
+    generationError.value = `An error occurred: ${err.message}`
   } finally {
-    isGenerating.value = false;
+    isGenerating.value = false
   }
-};
+}
 
 // --- Category Icons ---
 const getIconDetails = (category) => {
   switch (category) {
-    case "Typhoon Preparedness":
-      return { bg: "bg-blue-100", text: "text-blue-600", icon: "ph:wind-bold" };
-    case "Crop Management":
-      return { bg: "bg-green-100", text: "text-green-600", icon: "ph:plant-bold" };
-    case "Health & Safety":
-      return { bg: "bg-yellow-100", text: "text-yellow-700", icon: "ph:first-aid-kit-bold" };
+    case 'Typhoon Preparedness':
+      return { bg: 'bg-blue-100', text: 'text-blue-600', icon: 'ph:wind-bold' }
+    case 'Crop Management':
+      return { bg: 'bg-green-100', text: 'text-green-600', icon: 'ph:plant-bold' }
+    case 'Health & Safety':
+      return { bg: 'bg-yellow-100', text: 'text-yellow-700', icon: 'ph:first-aid-kit-bold' }
     default:
-      return { bg: "bg-gray-100", text: "text-gray-600", icon: "ph:info-bold" };
+      return { bg: 'bg-gray-100', text: 'text-gray-600', icon: 'ph:info-bold' }
   }
-};
+}
 
-// --- Auto-trigger generation when new data arrives ---
-watch(
-  latestData,
-  (newData) => {
-    if (newData) handleGenerate();
-  },
-  { immediate: true }
-);
+// --- Auto-trigger generation on initial data load ---
+watch(latestData, (newData, oldData) => {
+  // Only trigger when data changes from empty (null/undefined) to a real value
+  if (newData && (oldData === null || oldData === undefined)) {
+    handleGenerate()
+  }
+})
 </script>

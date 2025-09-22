@@ -22,7 +22,7 @@ ChartJS.register(
   Title,
   Tooltip,
   Legend,
-  Decimation
+  Decimation,
 )
 
 // Props
@@ -49,9 +49,7 @@ const chartOptions = {
       intersect: false,
       callbacks: {
         label: (ctx) =>
-          `${ctx.dataset.label}: ${
-            ctx.parsed.y != null ? ctx.parsed.y.toFixed(1) : 0
-          }`,
+          `${ctx.dataset.label}: ${ctx.parsed.y != null ? ctx.parsed.y.toFixed(1) : 0}`,
       },
     },
   },
@@ -101,10 +99,6 @@ const processedChartData = computed(() => ({
     >
       <div class="animate-pulse text-gray-600">Loading data...</div>
     </div>
-    <Line
-      v-if="!isLoading"
-      :data="processedChartData"
-      :options="chartOptions"
-    />
+    <Line v-if="!isLoading" :data="processedChartData" :options="chartOptions" />
   </div>
 </template>
