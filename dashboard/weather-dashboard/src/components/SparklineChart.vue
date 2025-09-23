@@ -1,16 +1,17 @@
 <template>
-  <div class="w-full h-12">
+  <div class="w-full h-12 transition-colors duration-300">
     <ApexChart :options="chartOptions" :series="series" type="line" height="48" />
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import VueApexCharts from 'vue3-apexcharts'
 
-// Register component for <script setup>
+// Register ApexCharts component
 const ApexChart = VueApexCharts
 
+// Props
 const props = defineProps({
   data: {
     type: Array,
@@ -18,10 +19,11 @@ const props = defineProps({
   },
   color: {
     type: String,
-    default: '#3B82F6', // Default blue
+    default: '#3B82F6', // Tailwind blue-500
   },
 })
 
+// Series
 const series = computed(() => [
   {
     name: 'Value',
@@ -29,13 +31,32 @@ const series = computed(() => [
   },
 ])
 
+// Dark mode reactive state
+const isDark = ref(document.documentElement.classList.contains('dark'))
+
+let observer = null
+onMounted(() => {
+  observer = new MutationObserver(() => {
+    isDark.value = document.documentElement.classList.contains('dark')
+  })
+  observer.observe(document.documentElement, {
+    attributes: true,
+    attributeFilter: ['class'],
+  })
+})
+
+onUnmounted(() => {
+  if (observer) observer.disconnect()
+})
+
+// Chart options (updates when dark mode changes)
 const chartOptions = computed(() => ({
   chart: {
     type: 'line',
     height: 48,
-    sparkline: {
-      enabled: true,
-    },
+    sparkline: { enabled: true },
+    animations: { enabled: true, easing: 'easeinout', speed: 400 },
+    background: 'transparent',
   },
   stroke: {
     curve: 'smooth',
@@ -43,13 +64,20 @@ const chartOptions = computed(() => ({
   },
   tooltip: {
     enabled: true,
+    theme: isDark.value ? 'dark' : 'light',
+    x: { show: false },
     y: {
       formatter: (value) => (value != null ? value.toFixed(1) : ''),
     },
   },
   colors: [props.color],
-  dataLabels: {
-    enabled: false,
+  dataLabels: { enabled: false },
+  markers: {
+    size: 0,
+    hover: { size: 4 },
+  },
+  grid: {
+    borderColor: isDark.value ? '#374151' : '#E5E7EB', // Tailwind gray-700 / gray-200
   },
 }))
 </script>

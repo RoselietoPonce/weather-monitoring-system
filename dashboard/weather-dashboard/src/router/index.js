@@ -7,16 +7,17 @@ import MainLayout from '@/layout/MainLayout.vue'
 
 // Views
 import LoginView from '@/views/LoginView.vue'
-import HomeView from '@/views/HomeView.vue' // Corrected from DashboardView
+import HomeView from '@/views/HomeView.vue'
 import ChartsView from '@/views/ChartsView.vue'
 import ReportsView from '@/views/ReportsView.vue'
 import AlertsView from '@/views/AlertsView.vue'
 import RecommendationsView from '@/views/RecommendationsView.vue'
 import ProfileView from '@/views/ProfileView.vue'
+import PrivacyPolicyView from '@/views/PrivacyPolicyView.vue' // <-- Import new page
+import TermsOfServiceView from '@/views/TermsOfServiceView.vue' // <-- Import new page
 
 /**
  * A helper function to wait for Firebase auth to initialize.
- * @returns {Promise<import('firebase/auth').User | null>}
  */
 const getCurrentUser = () => {
   return new Promise((resolve, reject) => {
@@ -36,7 +37,7 @@ const router = createRouter({
   routes: [
     {
       path: '/login',
-      name: 'login', // Use lowercase for consistency
+      name: 'login',
       component: LoginView,
     },
     {
@@ -46,8 +47,8 @@ const router = createRouter({
       children: [
         {
           path: '',
-          name: 'dashboard', // Use lowercase for consistency
-          component: HomeView, // Corrected component
+          name: 'dashboard',
+          component: HomeView,
         },
         {
           path: 'charts',
@@ -74,6 +75,17 @@ const router = createRouter({
           name: 'profile',
           component: ProfileView,
         },
+        // --- NEW ROUTES ADDED HERE ---
+        {
+          path: 'privacy-policy',
+          name: 'privacy-policy',
+          component: PrivacyPolicyView,
+        },
+        {
+          path: 'terms-of-service',
+          name: 'terms-of-service',
+          component: TermsOfServiceView,
+        },
       ],
     },
   ],
@@ -82,18 +94,13 @@ const router = createRouter({
 // The correct async navigation guard
 router.beforeEach(async (to, from, next) => {
   const requiresAuth = to.matched.some((record) => record.meta.requiresAuth)
-
-  // Wait for Firebase to confirm auth state
   const isAuthenticated = await getCurrentUser()
 
   if (requiresAuth && !isAuthenticated) {
-    // If route requires auth and user is not logged in, redirect to login.
     next({ name: 'login' })
   } else if (isAuthenticated && to.name === 'login') {
-    // If user is logged in and tries to go to login page, redirect to dashboard.
     next({ name: 'dashboard' })
   } else {
-    // Otherwise, proceed as normal.
     next()
   }
 })

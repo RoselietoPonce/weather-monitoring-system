@@ -7,14 +7,20 @@
   --color-primary: #1a73e8; /* Light mode primary accent (e.g., buttons) */
   --color-text-main: #202124; /* Light mode main text */
   --color-text-light: #5f6368; /* Light mode secondary text */
+
+  /* NEW: Hover backgrounds */
+  --color-hover: #e8eaed; /* Light mode hover (soft gray) */
 }
 
 html.dark {
-  --color-background: #121212; /* Dark mode background */
-  --color-surface: #1e1e1e; /* Dark mode cards/surfaces */
+  --color-background: #000000; /* True black background */
+  --color-surface: #121212; /* Very dark gray for cards/surfaces */
   --color-primary: #8ab4f8; /* Dark mode primary accent */
   --color-text-main: #e8eaed; /* Dark mode main text */
   --color-text-light: #9aa0a6; /* Dark mode secondary text */
+
+  /* NEW: Hover backgrounds */
+  --color-hover: #2a2a2a; /* Dark mode hover (soft gray, not pure white) */
 }
 
 /* Apply a smooth transition to background and text colors */
@@ -47,14 +53,28 @@ body {
 
 /* Dark mode scrollbar styles */
 html.dark ::-webkit-scrollbar-track {
-  background: #222222; /* Dark mode track */
+  background: #000000; /* Black track */
 }
 
 html.dark ::-webkit-scrollbar-thumb {
-  background: #4a4a4a; /* Dark mode thumb */
+  background: #2a2a2a; /* Darker gray thumb */
   border-radius: 10px;
 }
 
 html.dark ::-webkit-scrollbar-thumb:hover {
-  background: #6a6a6a; /* Dark mode thumb hover */
+  background: #3a3a3a; /* Slightly lighter gray on hover */
+}
+
+/* Firefox scrollbar support */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #c2c8d0 #f0f4f9;
+}
+html.dark * {
+  scrollbar-color: #2a2a2a #000000;
+}
+
+/* Custom hover utilities */
+.hover-bg-hover:hover {
+  background-color: var(--color-hover) !important;
 }

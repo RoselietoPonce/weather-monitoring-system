@@ -3,18 +3,22 @@
     <div class="max-w-7xl mx-auto">
       <!-- Header -->
       <div class="mb-10">
-        <h1 class="text-4xl font-bold text-text-main tracking-tight">Charts & Trends</h1>
-        <p class="text-text-light mt-2">View historical graphs of weather parameters.</p>
+        <h1 class="text-4xl font-bold text-[var(--color-text-main)] tracking-tight">
+          Charts & Trends
+        </h1>
+        <p class="text-[var(--color-text-light)] mt-2">
+          View historical graphs of weather parameters.
+        </p>
       </div>
 
       <!-- Control Panel -->
-      <div class="bg-white rounded-2xl shadow-md p-6 mb-8">
+      <div class="bg-[var(--color-surface)] rounded-2xl shadow-md p-6 mb-8 transition-colors">
         <div class="flex items-center justify-between">
-          <h3 class="text-lg font-medium text-gray-800">Data Time Range</h3>
+          <h3 class="text-lg font-medium text-[var(--color-text-main)]">Data Time Range</h3>
           <select
             v-model="selectedTimeRange"
             :disabled="isLoading"
-            class="bg-gray-50 border border-gray-300 rounded-lg py-2 px-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+            class="bg-[var(--color-background)] border border-gray-300 dark:border-white/10 rounded-lg py-2 px-3 text-sm text-[var(--color-text-main)] focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
           >
             <option value="last7">Last 7 Readings</option>
             <option value="weekly">Weekly</option>
@@ -25,7 +29,7 @@
       </div>
 
       <!-- Chart Display -->
-      <div class="bg-white rounded-2xl shadow-md p-6">
+      <div class="bg-[var(--color-surface)] rounded-2xl shadow-md p-6 transition-colors">
         <div v-memo="[processedChartData, isLoading]">
           <WeatherChart :chart-data="processedChartData" :is-loading="isLoading" />
         </div>
@@ -59,7 +63,7 @@ const chartData = ref({
   datasets: [
     {
       label: 'Temperature (°C)',
-      borderColor: 'rgba(239, 68, 68, 1)',
+      borderColor: 'rgba(239, 68, 68, 1)', // red-500
       backgroundColor: 'rgba(239, 68, 68, 0.2)',
       data: [],
       borderWidth: 2,
@@ -68,7 +72,7 @@ const chartData = ref({
     },
     {
       label: 'Humidity (%)',
-      borderColor: 'rgba(59, 130, 246, 1)',
+      borderColor: 'rgba(59, 130, 246, 1)', // blue-500
       backgroundColor: 'rgba(59, 130, 246, 0.2)',
       data: [],
       borderWidth: 2,
@@ -77,7 +81,7 @@ const chartData = ref({
     },
     {
       label: 'Rainfall (mm)',
-      borderColor: 'rgba(99, 102, 241, 1)',
+      borderColor: 'rgba(99, 102, 241, 1)', // indigo-500
       backgroundColor: 'rgba(99, 102, 241, 0.2)',
       data: [],
       borderWidth: 2,

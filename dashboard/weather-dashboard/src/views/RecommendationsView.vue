@@ -10,41 +10,41 @@
       </div>
 
       <!-- Control and Current Data Panel -->
-      <div class="bg-white rounded-2xl shadow-md p-6 mb-8">
+      <div class="bg-surface dark:bg-dark-surface rounded-2xl shadow-md p-6 mb-8">
         <div class="flex flex-col sm:flex-row items-center justify-between gap-6">
+          <!-- Left: Data -->
           <div class="flex-1">
-            <h2 class="text-xl font-bold text-gray-800">Analysis Input</h2>
-            <p class="text-gray-600 mt-1">Using the latest sensor readings to generate insights:</p>
+            <h2 class="text-xl font-bold text-text-main">Analysis Input</h2>
+            <p class="text-text-light mt-1">
+              Using the latest sensor readings to generate insights:
+            </p>
 
             <!-- Current Data Display -->
-            <div v-if="isDataLoading" class="mt-4 text-gray-500">Fetching latest data...</div>
+            <div v-if="isDataLoading" class="mt-4 text-text-light">Fetching latest data...</div>
             <div v-else-if="latestData" class="mt-4 grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
               <div class="flex items-center gap-2">
                 <Icon icon="ph:thermometer-bold" class="h-5 w-5 text-red-500" />
-                <span class="text-gray-700">
-                  Temp:
-                  <strong>{{ latestData.temperature.toFixed(1) }}°C</strong>
+                <span class="text-text-main">
+                  Temp: <strong>{{ latestData.temperature.toFixed(1) }}°C</strong>
                 </span>
               </div>
               <div class="flex items-center gap-2">
                 <Icon icon="ph:drop-bold" class="h-5 w-5 text-blue-500" />
-                <span class="text-gray-700">
-                  Humidity:
-                  <strong>{{ latestData.humidity.toFixed(0) }}%</strong>
+                <span class="text-text-main">
+                  Humidity: <strong>{{ latestData.humidity.toFixed(0) }}%</strong>
                 </span>
               </div>
               <div class="flex items-center gap-2">
                 <Icon icon="ph:cloud-rain-bold" class="h-5 w-5 text-cyan-500" />
-                <span class="text-gray-700">
-                  Rainfall:
-                  <strong>{{ latestData.rainfall.toFixed(1) }} mm</strong>
+                <span class="text-text-main">
+                  Rainfall: <strong>{{ latestData.rainfall.toFixed(1) }} mm</strong>
                 </span>
               </div>
             </div>
             <div v-else class="mt-4 text-red-500">Could not load latest data.</div>
           </div>
 
-          <!-- Button -->
+          <!-- Right: Button -->
           <button
             @click="handleGenerate"
             :disabled="isGenerating || isDataLoading || !latestData"
@@ -60,14 +60,18 @@
       <div>
         <!-- Loading Skeleton -->
         <div v-if="isGenerating" class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div v-for="n in 2" :key="n" class="bg-white rounded-2xl shadow-md p-6 animate-pulse">
+          <div
+            v-for="n in 2"
+            :key="n"
+            class="bg-surface dark:bg-dark-surface rounded-2xl shadow-md p-6 animate-pulse"
+          >
             <div class="flex items-center mb-3">
-              <div class="h-10 w-10 rounded-full bg-gray-200"></div>
-              <div class="ml-4 h-6 w-1/2 rounded bg-gray-200"></div>
+              <div class="h-10 w-10 rounded-full bg-gray-200 dark:bg-gray-700"></div>
+              <div class="ml-4 h-6 w-1/2 rounded bg-gray-200 dark:bg-gray-700"></div>
             </div>
             <div class="space-y-2">
-              <div class="h-4 rounded bg-gray-200 w-full"></div>
-              <div class="h-4 rounded bg-gray-200 w-5/6"></div>
+              <div class="h-4 rounded bg-gray-200 dark:bg-gray-700 w-full"></div>
+              <div class="h-4 rounded bg-gray-200 dark:bg-gray-700 w-5/6"></div>
             </div>
           </div>
         </div>
@@ -75,7 +79,7 @@
         <!-- Error Message -->
         <div
           v-else-if="generationError"
-          class="bg-red-50 border border-red-200 text-red-700 rounded-lg p-6 text-center"
+          class="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-700 text-red-700 dark:text-red-400 rounded-lg p-6 text-center"
         >
           <h3 class="font-bold text-lg">Analysis Failed</h3>
           <p>{{ generationError }}</p>
@@ -95,7 +99,7 @@
           <div
             v-for="(rec, index) in recommendations"
             :key="index"
-            class="bg-white rounded-2xl shadow-md p-6"
+            class="bg-surface dark:bg-dark-surface rounded-2xl shadow-md p-6"
           >
             <div class="flex items-center mb-3">
               <div
@@ -108,11 +112,11 @@
                   :class="getIconDetails(rec.category).text"
                 />
               </div>
-              <h3 class="ml-4 text-xl font-bold text-gray-800">
+              <h3 class="ml-4 text-xl font-bold text-text-main">
                 {{ rec.category }}
               </h3>
             </div>
-            <p class="text-gray-700 leading-relaxed">
+            <p class="text-text-light leading-relaxed">
               {{ rec.recommendation }}
             </p>
           </div>
@@ -134,10 +138,7 @@ const GEMINI_API_KEY = 'AIzaSyD0qDNzCaAvWc0skFlIZftZjYvBw1pUSeA'
 const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`
 
 const props = defineProps({
-  deviceAddress: {
-    type: String,
-    default: 'Philippines',
-  },
+  deviceAddress: { type: String, default: 'Philippines' },
 })
 
 const { latestData, isLoading: isDataLoading } = useWeatherData()
@@ -150,7 +151,7 @@ const generationError = ref(null)
 // --- Fetch historical rainfall data ---
 const fetchHistoricalData = async () => {
   try {
-    const oneDayAgo = new Date().getTime() - 24 * 60 * 60 * 1000
+    const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000
     const historicalQuery = query(
       dbRef(rtdb, 'sensor_logs'),
       orderByChild('timestamp'),
@@ -175,7 +176,7 @@ const fetchHistoricalData = async () => {
 
 // --- Gemini API Call ---
 const generateAIAssistantResponse = async (prompt) => {
-  if (!GEMINI_API_KEY || GEMINI_API_KEY === 'YOUR_GEMINI_API_KEY') {
+  if (!GEMINI_API_KEY || GEMINI_API_KEY === 'YOUR_API_KEY_HERE') {
     throw new Error('Gemini API key is not set. Please add it in the script.')
   }
 
@@ -192,12 +193,9 @@ const generateAIAssistantResponse = async (prompt) => {
     try {
       const errorBody = await response.json()
       console.error('Gemini API Error:', errorBody)
-      const message = errorBody.error?.message || JSON.stringify(errorBody)
-      errorDetails += ` Details: ${message}`
+      errorDetails += ` Details: ${errorBody.error?.message || JSON.stringify(errorBody)}`
     } catch {
-      const textResponse = await response.text()
-      console.error('Gemini API Error (non-JSON response):', textResponse)
-      errorDetails += ` Non-JSON response: ${textResponse}`
+      errorDetails += ' Could not parse error response.'
     }
     throw new Error(errorDetails)
   }
@@ -250,6 +248,8 @@ const handleGenerate = async () => {
     `
 
     const rawResponse = await generateAIAssistantResponse(prompt)
+
+    // Clean response
     const cleanedResponse = rawResponse
       .replace(/```json/g, '')
       .replace(/```/g, '')
@@ -268,19 +268,34 @@ const handleGenerate = async () => {
 const getIconDetails = (category) => {
   switch (category) {
     case 'Typhoon Preparedness':
-      return { bg: 'bg-blue-100', text: 'text-blue-600', icon: 'ph:wind-bold' }
+      return {
+        bg: 'bg-blue-100 dark:bg-blue-900/40',
+        text: 'text-blue-600 dark:text-blue-300',
+        icon: 'ph:wind-bold',
+      }
     case 'Crop Management':
-      return { bg: 'bg-green-100', text: 'text-green-600', icon: 'ph:plant-bold' }
+      return {
+        bg: 'bg-green-100 dark:bg-green-900/40',
+        text: 'text-green-600 dark:text-green-300',
+        icon: 'ph:plant-bold',
+      }
     case 'Health & Safety':
-      return { bg: 'bg-yellow-100', text: 'text-yellow-700', icon: 'ph:first-aid-kit-bold' }
+      return {
+        bg: 'bg-yellow-100 dark:bg-yellow-900/40',
+        text: 'text-yellow-700 dark:text-yellow-300',
+        icon: 'ph:first-aid-kit-bold',
+      }
     default:
-      return { bg: 'bg-gray-100', text: 'text-gray-600', icon: 'ph:info-bold' }
+      return {
+        bg: 'bg-gray-100 dark:bg-gray-800',
+        text: 'text-gray-600 dark:text-gray-300',
+        icon: 'ph:info-bold',
+      }
   }
 }
 
-// --- Auto-trigger generation on initial data load ---
+// --- Auto-trigger generation ---
 watch(latestData, (newData, oldData) => {
-  // Only trigger when data changes from empty (null/undefined) to a real value
   if (newData && (oldData === null || oldData === undefined)) {
     handleGenerate()
   }

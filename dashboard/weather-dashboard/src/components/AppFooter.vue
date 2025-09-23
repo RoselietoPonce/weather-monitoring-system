@@ -5,8 +5,10 @@
     <div class="max-w-7xl mx-auto flex justify-between items-center text-sm">
       <p>&copy; {{ new Date().getFullYear() }} Weather Monitoring System. All Rights Reserved.</p>
       <div class="flex items-center space-x-4">
-        <a href="#" class="hover:text-primary">Privacy Policy</a>
-        <a href="#" class="hover:text-primary">Terms of Service</a>
+        <router-link to="/privacy-policy" class="hover:text-primary">Privacy Policy</router-link>
+        <router-link to="/terms-of-service" class="hover:text-primary"
+          >Terms of Service</router-link
+        >
       </div>
     </div>
   </footer>

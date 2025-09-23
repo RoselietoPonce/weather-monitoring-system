@@ -1,0 +1,13 @@
+Firebase token status: 
+> ERROR.mUpdateEngine: Error writing to basic client.
+> WARN.mRunUntil: Terminating with write error.
+> ERROR.mConnectSSL: Failed to initlalize the SSL layer.
+> ERROR.mConnectSSL: Unknown error code.
+Firebase token status: connection lost
+Firebase token status: 
+> ERROR.mUpdateEngine: Error writing to basic client.
+> WARN.mRunUntil: Terminating with write error.
+> ERROR.mConnectSSL: Failed to initlalize the SSL layer.
+> ERROR.mConnectSSL: Unknown error code.
+Firebase token status: connection lost
+Firebase token status: 

@@ -7,12 +7,16 @@
 // Create a file named "secrets.h" and define your credentials there.
 #include "secrets.h"
 
-// --- SENSOR AND PIN CONFIGURATION ---
+// --- FIREBASE AUTH USER (create in Firebase Authentication -> Users) ---
+#define USER_EMAIL "ponce.rn952@s.msumain.edu.ph" // <-- CHANGE THIS
+#define USER_PASSWORD "Norhaina091402"            // <-- CHANGE THIS
+
+// --- SENSOR CONFIGURATION ---
 #define DHT_SENSOR_PIN 5
 #define DHT_SENSOR_TYPE DHT22
 #define RAIN_SENSOR_PIN 36
 
-// --- NEW: DEVICE LOCATION ---
+// --- DEVICE LOCATION ---
 #define DEVICE_LATITUDE 7.99795
 #define DEVICE_LONGITUDE 124.25324
 
@@ -22,11 +26,11 @@ FirebaseAuth auth;
 FirebaseConfig config;
 DHT dht_sensor(DHT_SENSOR_PIN, DHT_SENSOR_TYPE);
 
-// --- TIMING & STATE VARIABLES ---
+// --- TIMING ---
 unsigned long sendDataPrevMillis = 0;
 unsigned long dataSendInterval = 3000;
-bool signupOK = false;
 
+// --- TOKEN STATUS CALLBACK ---
 void tokenStatusCallback(TokenInfo info)
 {
   if (info.status == token_status_ready)
@@ -44,6 +48,7 @@ void setup()
   Serial.begin(115200);
   dht_sensor.begin();
 
+  // --- CONNECT TO WIFI ---
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
   Serial.print("Connecting to Wi-Fi");
   while (WiFi.status() != WL_CONNECTED)
@@ -56,31 +61,60 @@ void setup()
   Serial.println(WiFi.localIP());
   Serial.println();
 
+  // --- NEW: TIME SYNCHRONIZATION (THIS IS THE FIX) ---
+  Serial.println("Configuring time...");
+  configTime(8 * 3600, 0, "pool.ntp.org"); // GMT+8
+  Serial.print("Waiting for time synchronization");
+
+  time_t now = time(nullptr);
+  unsigned long start = millis();
+  while (now < 24 * 3600 && millis() - start < 10000)
+  { // 10-second timeout
+    delay(500);
+    Serial.print(".");
+    now = time(nullptr);
+  }
+
+  if (now < 24 * 3600)
+  {
+    Serial.println("\nFailed to synchronize time!");
+  }
+  else
+  {
+    struct tm timeinfo;
+    gmtime_r(&now, &timeinfo);
+    Serial.println("\nCurrent time: " + String(asctime(&timeinfo)));
+  }
+
+  struct tm timeinfo;
+  gmtime_r(&now, &timeinfo);
+  Serial.println("");
+  Serial.print("Current time: ");
+  Serial.print(asctime(&timeinfo));
+  // --- END OF FIX ---
+
+  // --- FIREBASE CONFIG ---
   config.api_key = API_KEY;
   config.database_url = DATABASE_URL;
   config.token_status_callback = tokenStatusCallback;
 
-  if (Firebase.signUp(&config, &auth, "", ""))
-  {
-    Serial.println("Firebase anonymous sign-up OK");
-    signupOK = true;
-  }
-  else
-  {
-    Serial.printf("Sign-up error: %s\n", config.signer.signupError.message.c_str());
-  }
+  // --- SET USER EMAIL/PASSWORD ---
+  auth.user.email = USER_EMAIL;
+  auth.user.password = USER_PASSWORD;
 
+  // --- START FIREBASE ---
   Firebase.begin(&config, &auth);
   Firebase.reconnectWiFi(true);
 }
 
 void loop()
 {
-  if (Firebase.ready() && signupOK && (millis() - sendDataPrevMillis > dataSendInterval || sendDataPrevMillis == 0))
+  // Use Firebase.ready() which confirms authentication is complete
+  if (Firebase.ready() && (millis() - sendDataPrevMillis > dataSendInterval || sendDataPrevMillis == 0))
   {
     sendDataPrevMillis = millis();
 
-    // --- 1. READ SENSOR DATA ---
+    // --- READ SENSORS ---
     float temperature = dht_sensor.readTemperature();
     float humidity = dht_sensor.readHumidity();
     int rainRaw = analogRead(RAIN_SENSOR_PIN);
@@ -98,17 +132,16 @@ void loop()
     Serial.printf("Humidity: %.2f %%\n", humidity);
     Serial.printf("Rainfall Level: %d %%\n", rainPercent);
 
-    // --- 2. PREPARE DATA AS A JSON OBJECT ---
+    // --- JSON DATA ---
     FirebaseJson jsonData;
     jsonData.set("temperature", temperature);
     jsonData.set("humidity", humidity);
     jsonData.set("rainfall", rainPercent);
     jsonData.set("timestamp/.sv", "timestamp");
-    // --- NEW: ADD LOCATION TO JSON ---
     jsonData.set("location/lat", DEVICE_LATITUDE);
     jsonData.set("location/lng", DEVICE_LONGITUDE);
 
-    // --- 3. PUSH THE JSON OBJECT TO FIREBASE (FOR HISTORICAL LOGS) ---
+    // --- PUSH TO HISTORY ---
     String historyPath = "/sensor_logs";
     if (Firebase.RTDB.pushJSON(&fbdo, historyPath, &jsonData))
     {
@@ -119,7 +152,7 @@ void loop()
       Serial.println("FAILED: Could not push historical data. REASON: " + fbdo.errorReason());
     }
 
-    // --- 4. SET THE JSON OBJECT TO THE 'LATEST' PATH (FOR THE DASHBOARD) ---
+    // --- UPDATE LATEST DATA ---
     String latestPath = "/sensor_data/latest";
     if (Firebase.RTDB.setJSON(&fbdo, latestPath, &jsonData))
     {

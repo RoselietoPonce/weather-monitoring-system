@@ -3,52 +3,63 @@
     <div class="max-w-7xl mx-auto">
       <!-- Header -->
       <div class="mb-10">
-        <h1 class="text-4xl font-bold text-text-main tracking-tight">Data Reports</h1>
-        <p class="text-text-light mt-2">
+        <h1 class="text-4xl font-bold text-[var(--color-text-main)] tracking-tight">
+          Data Reports
+        </h1>
+        <p class="text-[var(--color-text-light)] mt-2">
           Select a date range and grouping to view summarized sensor data.
         </p>
       </div>
 
       <!-- Filters + Actions -->
       <div
-        class="bg-white rounded-2xl shadow-md p-6 mb-8 flex flex-col sm:flex-row items-center justify-between space-y-4 sm:space-y-0"
+        class="bg-[var(--color-surface)] rounded-2xl shadow-md p-6 mb-8 flex flex-col sm:flex-row items-center justify-between space-y-4 sm:space-y-0"
       >
         <div class="flex flex-wrap items-center gap-4">
           <!-- Start Date -->
           <div>
-            <label for="startDate" class="block text-sm font-medium text-gray-700 mb-1"
-              >Start Date</label
+            <label
+              for="startDate"
+              class="block text-sm font-medium text-[var(--color-text-main)] mb-1"
             >
+              Start Date
+            </label>
             <input
               type="date"
               id="startDate"
               v-model="startDate"
-              class="border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              class="border-gray-300 dark:border-white/10 rounded-lg shadow-sm focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] bg-[var(--color-background)] text-[var(--color-text-main)]"
             />
           </div>
 
           <!-- End Date -->
           <div>
-            <label for="endDate" class="block text-sm font-medium text-gray-700 mb-1"
-              >End Date</label
+            <label
+              for="endDate"
+              class="block text-sm font-medium text-[var(--color-text-main)] mb-1"
             >
+              End Date
+            </label>
             <input
               type="date"
               id="endDate"
               v-model="endDate"
-              class="border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              class="border-gray-300 dark:border-white/10 rounded-lg shadow-sm focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] bg-[var(--color-background)] text-[var(--color-text-main)]"
             />
           </div>
 
           <!-- Group By -->
           <div>
-            <label for="groupBy" class="block text-sm font-medium text-gray-700 mb-1"
-              >Group By</label
+            <label
+              for="groupBy"
+              class="block text-sm font-medium text-[var(--color-text-main)] mb-1"
             >
+              Group By
+            </label>
             <select
               id="groupBy"
               v-model="groupBy"
-              class="border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              class="border-gray-300 dark:border-white/10 rounded-lg shadow-sm focus:ring-[var(--color-primary)] focus:border-[var(--color-primary)] bg-[var(--color-background)] text-[var(--color-text-main)]"
             >
               <option value="daily">Daily</option>
               <option value="weekly">Weekly</option>
@@ -89,49 +100,60 @@
       </div>
 
       <!-- Data Table -->
-      <div class="bg-white rounded-2xl shadow-md overflow-hidden">
-        <div v-if="isLoading" class="p-6 text-center text-gray-500">Loading data...</div>
-        <div v-else-if="!aggregatedData.length" class="p-6 text-center text-gray-500">
+      <div class="bg-[var(--color-surface)] rounded-2xl shadow-md overflow-hidden">
+        <div v-if="isLoading" class="p-6 text-center text-[var(--color-text-light)]">
+          Loading data...
+        </div>
+        <div
+          v-else-if="!aggregatedData.length"
+          class="p-6 text-center text-[var(--color-text-light)]"
+        >
           No data available for the selected period.
         </div>
         <div v-else class="overflow-x-auto">
-          <table class="min-w-full divide-y divide-gray-200">
-            <thead class="bg-gray-50">
+          <table class="min-w-full divide-y divide-gray-200 dark:divide-white/10">
+            <thead class="bg-[var(--color-background)]">
               <tr>
                 <th
-                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  class="px-6 py-3 text-left text-xs font-medium text-[var(--color-text-light)] uppercase tracking-wider"
                 >
                   Period
                 </th>
                 <th
-                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  class="px-6 py-3 text-left text-xs font-medium text-[var(--color-text-light)] uppercase tracking-wider"
                 >
                   Avg. Temp (°C)
                 </th>
                 <th
-                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  class="px-6 py-3 text-left text-xs font-medium text-[var(--color-text-light)] uppercase tracking-wider"
                 >
                   Avg. Humidity (%)
                 </th>
                 <th
-                  class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                  class="px-6 py-3 text-left text-xs font-medium text-[var(--color-text-light)] uppercase tracking-wider"
                 >
                   Total Rainfall (mm)
                 </th>
               </tr>
             </thead>
-            <tbody class="bg-white divide-y divide-gray-200">
-              <tr v-for="record in aggregatedData" :key="record.period" class="hover:bg-gray-50">
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-800">
+            <tbody class="bg-[var(--color-surface)] divide-y divide-gray-200 dark:divide-white/10">
+              <tr
+                v-for="record in aggregatedData"
+                :key="record.period"
+                class="hover:bg-[var(--color-background)]"
+              >
+                <td
+                  class="px-6 py-4 whitespace-nowrap text-sm font-medium text-[var(--color-text-main)]"
+                >
                   {{ record.period }}
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-[var(--color-text-main)]">
                   {{ record.temperature }}
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-[var(--color-text-main)]">
                   {{ record.humidity }}
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-[var(--color-text-main)]">
                   {{ record.rainfall }}
                 </td>
               </tr>

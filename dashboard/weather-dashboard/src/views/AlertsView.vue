@@ -79,7 +79,7 @@
                 @click="
                   thresholds.email_notifications_enabled = !thresholds.email_notifications_enabled
                 "
-                :class="thresholds.email_notifications_enabled ? 'bg-primary' : 'bg-text-light/20'"
+                :class="thresholds.email_notifications_enabled ? 'bg-blue-600' : 'bg-gray-300'"
                 class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors"
                 role="switch"
                 :aria-checked="thresholds.email_notifications_enabled"
@@ -88,7 +88,7 @@
                   :class="
                     thresholds.email_notifications_enabled ? 'translate-x-6' : 'translate-x-1'
                   "
-                  class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"
+                  class="inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform"
                 />
               </button>
             </div>

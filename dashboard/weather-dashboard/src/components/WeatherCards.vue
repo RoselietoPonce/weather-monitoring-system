@@ -5,14 +5,15 @@
       <div
         v-for="i in 3"
         :key="i"
-        class="bg-surface/80 backdrop-blur-sm rounded-2xl shadow-sm p-6 animate-pulse"
+        class="bg-[var(--color-surface)]/80 backdrop-blur-sm rounded-2xl shadow-sm p-6 animate-pulse
+               transition-colors duration-500"
       >
         <div class="flex items-center justify-between mb-4">
-          <div class="h-8 w-24 bg-text-light/20 rounded-md"></div>
-          <div class="h-10 w-10 bg-text-light/20 rounded-full"></div>
+          <div class="h-8 w-24 bg-[var(--color-text-light)]/20 rounded-md transition-colors duration-500"></div>
+          <div class="h-10 w-10 bg-[var(--color-text-light)]/20 rounded-full transition-colors duration-500"></div>
         </div>
-        <div class="h-12 w-32 bg-text-light/20 rounded-md mb-4"></div>
-        <div class="h-16 bg-text-light/20 rounded-md"></div>
+        <div class="h-12 w-32 bg-[var(--color-text-light)]/20 rounded-md mb-4 transition-colors duration-500"></div>
+        <div class="h-16 bg-[var(--color-text-light)]/20 rounded-md transition-colors duration-500"></div>
       </div>
     </template>
 
@@ -21,20 +22,31 @@
       <div
         v-for="card in weatherData"
         :key="card.id"
-        class="bg-surface/80 backdrop-blur-sm rounded-2xl shadow-sm p-6 transition-all duration-300 hover:shadow-lg hover:-translate-y-1 flex flex-col"
+        class="bg-[var(--color-surface)]/80 backdrop-blur-sm rounded-2xl shadow-sm p-6
+               transition-all duration-500 ease-in-out
+               hover:shadow-xl hover:-translate-y-1 flex flex-col"
       >
         <!-- Card Header -->
         <div class="flex items-center justify-between mb-4">
-          <h3 class="font-semibold text-text-light">{{ card.title }}</h3>
-          <div class="p-2 rounded-full" :class="card.bgColor">
+          <h3 class="font-semibold text-[var(--color-text-light)] transition-colors duration-500">
+            {{ card.title }}
+          </h3>
+          <div
+            class="p-2 rounded-full transition-all duration-500"
+            :class="card.bgColor"
+          >
             <Icon :icon="card.icon" class="h-6 w-6" :class="card.color" />
           </div>
         </div>
 
         <!-- Main Value -->
         <div class="mb-4">
-          <span class="text-4xl font-bold text-text-main">{{ card.value }}</span>
-          <span class="text-xl font-medium text-text-light ml-1">{{ card.unit }}</span>
+          <span class="text-4xl font-bold text-[var(--color-text-main)] transition-colors duration-500">
+            {{ card.value }}
+          </span>
+          <span class="text-xl font-medium text-[var(--color-text-light)] ml-1 transition-colors duration-500">
+            {{ card.unit }}
+          </span>
         </div>
 
         <!-- Sparkline (takes remaining space) -->
@@ -81,7 +93,6 @@ onMounted(() => {
     const data = snapshot.val()
     if (data) {
       const records = Object.values(data)
-      // Ensure we handle cases where a value might be missing
       historicalData.value.temp = records.map((r) => r.temperature ?? 0)
       historicalData.value.humidity = records.map((r) => r.humidity ?? 0)
       historicalData.value.rainfall = records.map((r) => r.rainfall ?? 0)

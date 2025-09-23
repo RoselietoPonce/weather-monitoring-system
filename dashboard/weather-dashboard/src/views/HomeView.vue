@@ -2,35 +2,61 @@
   <div class="p-4 sm:p-6 lg:p-8">
     <div class="max-w-7xl mx-auto">
       <!-- Header -->
-      <header class="flex items-center justify-between mb-10">
+      <header
+        class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 border-b border-[var(--color-surface)]/40 pb-4 gap-4 sm:gap-0"
+      >
         <!-- Left Side: Title -->
-        <h1 class="text-4xl font-bold text-text-main tracking-tight">Dashboard</h1>
+        <h1 class="text-3xl sm:text-4xl font-bold text-[var(--color-text-main)] tracking-tight">
+          Dashboard
+        </h1>
 
         <!-- Right Side: Status Indicators -->
-        <div class="flex items-center text-sm text-text-light" aria-live="polite">
+        <div
+          class="flex items-center text-sm text-[var(--color-text-light)]"
+          aria-live="polite"
+          role="status"
+        >
           <!-- Connecting State -->
           <span v-if="lastUpdated === null">Connecting...</span>
 
           <!-- Online/Offline State -->
           <template v-else>
-            <div class="flex items-center">
-              <span class="relative flex h-3 w-3 mr-2">
+            <div class="flex items-center space-x-2">
+              <!-- Status Dot -->
+              <span
+                class="relative flex h-3 w-3"
+                :aria-label="isOnline ? 'Device Online' : 'Device Offline'"
+              >
                 <span
                   v-if="isOnline"
-                  class="animate-pulse absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"
+                  class="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400/70"
                 ></span>
                 <span
                   class="relative inline-flex rounded-full h-3 w-3"
                   :class="isOnline ? 'bg-green-500' : 'bg-red-500'"
                 ></span>
               </span>
-              <span>{{ isOnline ? 'Online' : 'Offline' }}</span>
+
+              <!-- Status Label -->
+              <span
+                :class="isOnline
+                  ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
+                  : 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300'"
+                class="px-2 py-0.5 rounded-full text-xs font-medium transition-colors duration-200"
+              >
+                {{ isOnline ? 'Online' : 'Offline' }}
+              </span>
             </div>
 
             <!-- Last Updated Timestamp -->
-            <div v-if="lastUpdated" class="flex items-center ml-4">
-              <span class="mx-2 text-text-light/50">|</span>
-              <span>Last updated: {{ new Date(lastUpdated).toLocaleString() }}</span>
+            <div v-if="lastUpdated" class="flex items-center ml-4 text-xs sm:text-sm">
+              <span class="mx-2 text-[var(--color-text-light)]/50">|</span>
+              <span>
+                Last updated:
+                <strong class="text-[var(--color-text-main)]">
+                  {{ new Date(lastUpdated).toLocaleString() }}
+                </strong>
+              </span>
             </div>
           </template>
         </div>
@@ -41,7 +67,7 @@
 
       <!-- Map Section -->
       <section class="mt-10">
-        <h2 class="text-2xl font-bold text-text-main mb-4">Station Location</h2>
+        <h2 class="text-2xl font-bold text-[var(--color-text-main)] mb-4">Station Location</h2>
 
         <!-- Map -->
         <WeatherMap
@@ -57,9 +83,9 @@
         <!-- Fallback -->
         <div
           v-else
-          class="bg-surface rounded-2xl shadow-sm p-6 h-96 flex items-center justify-center"
+          class="bg-gradient-to-br from-[var(--color-surface)] to-[var(--color-background)] rounded-3xl shadow-lg p-6 h-96 flex items-center justify-center transition-all duration-300"
         >
-          <p class="text-text-light">Loading map data...</p>
+          <p class="text-[var(--color-text-light)] animate-pulse">Loading map data...</p>
         </div>
       </section>
     </div>
@@ -86,15 +112,15 @@ const deviceAddress = ref('Weather Station Location')
 const lastUpdated = ref(null)
 
 let latestDataRef = null
+let latestDataCallback = null
 
 // Computed: Device status
 const isOnline = computed(() => {
   if (!lastUpdated.value) return false
-  const now = Date.now()
-  return now - lastUpdated.value < 30000 // within 30s considered online
+  return Date.now() - lastUpdated.value < 30000 // within 30s considered online
 })
 
-// Computed: Weather card data
+// Weather card data
 const weatherData = computed(() => [
   {
     id: 'temp',
@@ -102,8 +128,8 @@ const weatherData = computed(() => [
     value: temperature.value,
     unit: '°C',
     icon: 'ph:thermometer-cold-bold',
-    color: 'text-red-500',
-    bgColor: 'bg-red-100',
+    color: 'text-red-600 dark:text-red-400',
+    bgColor: 'bg-red-200 dark:bg-red-900/40 hover:shadow-lg hover:scale-[1.02] transition-all duration-300',
   },
   {
     id: 'humidity',
@@ -111,8 +137,8 @@ const weatherData = computed(() => [
     value: humidity.value,
     unit: '%',
     icon: 'ph:drop-bold',
-    color: 'text-blue-500',
-    bgColor: 'bg-blue-100',
+    color: 'text-blue-600 dark:text-blue-400',
+    bgColor: 'bg-blue-200 dark:bg-blue-900/40 hover:shadow-lg hover:scale-[1.02] transition-all duration-300',
   },
   {
     id: 'rainfall',
@@ -120,8 +146,8 @@ const weatherData = computed(() => [
     value: rainfall.value,
     unit: 'mm',
     icon: 'ph:cloud-rain-bold',
-    color: 'text-indigo-500',
-    bgColor: 'bg-indigo-100',
+    color: 'text-indigo-600 dark:text-indigo-400',
+    bgColor: 'bg-indigo-200 dark:bg-indigo-900/40 hover:shadow-lg hover:scale-[1.02] transition-all duration-300',
   },
 ])
 
@@ -149,29 +175,35 @@ onMounted(() => {
   isLoading.value = true
   latestDataRef = dbRef(rtdb, 'sensor_data/latest')
 
-  onValue(
-    latestDataRef,
-    (snapshot) => {
-      const data = snapshot.val()
-      if (data) {
-        temperature.value =
-          typeof data.temperature === 'number' ? data.temperature.toFixed(1) : 'N/A'
-        humidity.value = typeof data.humidity === 'number' ? data.humidity.toFixed(0) : 'N/A'
-        rainfall.value = typeof data.rainfall === 'number' ? data.rainfall.toFixed(1) : 'N/A'
-        lastUpdated.value = Date.now()
-        updateDeviceLocation(data)
-      }
-      isLoading.value = false
-    },
-    (error) => {
-      console.error('Error setting up data listeners:', error)
-      isLoading.value = false
-    },
-  )
+  latestDataCallback = (snapshot) => {
+    const data = snapshot.val()
+    if (data) {
+      const temp = Number(data.temperature)
+      const hum = Number(data.humidity)
+      const rain = Number(data.rainfall)
+
+      temperature.value = !isNaN(temp) ? temp.toFixed(1) : 'N/A'
+      humidity.value = !isNaN(hum) ? hum.toFixed(0) : 'N/A'
+      rainfall.value = !isNaN(rain) ? rain.toFixed(1) : 'N/A'
+
+      // ✅ Prefer device timestamp if available
+      lastUpdated.value = data.timestamp || Date.now()
+
+      updateDeviceLocation(data)
+    }
+    isLoading.value = false
+  }
+
+  onValue(latestDataRef, latestDataCallback, (error) => {
+    console.error('Error setting up data listeners:', error)
+    isLoading.value = false
+  })
 })
 
 // Cleanup listener
 onUnmounted(() => {
-  if (latestDataRef) off(latestDataRef)
+  if (latestDataRef && latestDataCallback) {
+    off(latestDataRef, latestDataCallback) // ✅ simplified
+  }
 })
 </script>

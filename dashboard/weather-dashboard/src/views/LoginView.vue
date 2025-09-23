@@ -26,7 +26,6 @@ const signIn = async () => {
     console.log('Successfully signed in:', userCredential.user)
     errorMessage.value = ''
     successMessage.value = ''
-    // CORRECTED REDIRECT: Let the router guard handle the final destination
     router.push('/')
   } catch (error) {
     console.error('Login Error:', error.message)
@@ -87,7 +86,6 @@ const signInWithGoogle = async () => {
     console.log('Successfully signed in with Google:', result.user)
     errorMessage.value = ''
     successMessage.value = ''
-    // CORRECTED REDIRECT: Let the router guard handle the final destination
     router.push('/')
   } catch (error) {
     console.error('Google Sign-In Error:', error)
@@ -99,13 +97,20 @@ const signInWithGoogle = async () => {
 </script>
 
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-gemini-gray-100 p-4">
-    <div class="max-w-md w-full bg-white rounded-2xl shadow-lg p-8 space-y-8">
+  <div
+    class="min-h-screen flex items-center justify-center bg-gemini-gray-100 dark:bg-gray-900 p-4 transition-colors duration-500"
+  >
+    <div
+      class="max-w-md w-full bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 space-y-8 transition-all duration-500 transform hover:scale-[1.01] animate-fade-in"
+    >
       <!-- Header -->
       <div class="text-center">
-        <Icon icon="ph:cloud-sun-bold" class="h-12 w-12 text-gemini-blue-dark mx-auto mb-4" />
-        <h2 class="text-3xl font-bold text-gemini-gray-900">Welcome Back</h2>
-        <p class="text-gemini-gray-600 mt-2">Sign in to access your dashboard</p>
+        <Icon
+          icon="ph:cloud-sun-bold"
+          class="h-12 w-12 text-gemini-blue-dark dark:text-blue-400 mx-auto mb-4 transition-transform duration-500 hover:rotate-12"
+        />
+        <h2 class="text-3xl font-bold text-gemini-gray-900 dark:text-white">Welcome Back</h2>
+        <p class="text-gemini-gray-600 dark:text-gray-300 mt-2">Sign in to access your dashboard</p>
       </div>
 
       <!-- Social Sign-in -->
@@ -114,11 +119,11 @@ const signInWithGoogle = async () => {
         type="button"
         :disabled="isLoading"
         aria-label="Sign in with Google"
-        class="w-full flex items-center justify-center py-3 px-4 border border-gemini-gray-300 rounded-full shadow-sm bg-white hover:bg-gemini-gray-100 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed group"
+        class="w-full flex items-center justify-center py-3 px-4 rounded-full shadow-sm border border-gray-400 dark:border-gray-500 bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gemini-blue transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed group"
       >
         <Icon icon="flat-color-icons:google" class="h-5 w-5" />
         <span
-          class="ml-3 text-sm font-medium text-gemini-gray-800 group-hover:text-gemini-gray-900"
+          class="ml-3 text-sm font-medium text-gray-800 dark:text-gray-200 group-hover:text-gray-900 dark:group-hover:text-white"
         >
           {{ isLoading ? 'Please wait...' : 'Sign in with Google' }}
         </span>
@@ -127,25 +132,30 @@ const signInWithGoogle = async () => {
       <!-- Separator -->
       <div class="relative">
         <div class="absolute inset-0 flex items-center">
-          <div class="w-full border-t border-gemini-gray-200"></div>
+          <div class="w-full border-t border-gray-300 dark:border-gray-600"></div>
         </div>
         <div class="relative flex justify-center text-sm">
-          <span class="px-2 bg-white text-gemini-gray-500">Or sign in with email</span>
+          <span class="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">
+            Or sign in with email
+          </span>
         </div>
       </div>
 
       <form @submit.prevent="signIn" class="space-y-6">
         <!-- Email -->
         <div>
-          <label for="email" class="block text-sm font-medium text-gemini-gray-700 mb-1"
-            >Email Address</label
+          <label
+            for="email"
+            class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1"
           >
+            Email Address
+          </label>
           <input
             v-model="email"
             type="email"
             id="email"
             aria-label="Email Address"
-            class="block w-full px-4 py-3 border border-gemini-gray-300 rounded-lg bg-gemini-gray-100 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gemini-blue transition-all duration-200"
+            class="block w-full px-4 py-3 border border-gray-400 dark:border-gray-500 rounded-lg bg-gray-100 dark:bg-gray-700 focus:bg-white dark:focus:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gemini-blue transition-all duration-300 text-gray-900 dark:text-gray-100"
             placeholder="you@example.com"
             required
           />
@@ -154,14 +164,17 @@ const signInWithGoogle = async () => {
         <!-- Password -->
         <div>
           <div class="flex items-center justify-between">
-            <label for="password" class="block text-sm font-medium text-gemini-gray-700 mb-1"
-              >Password</label
+            <label
+              for="password"
+              class="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1"
             >
+              Password
+            </label>
             <button
               @click.prevent="handlePasswordReset"
               type="button"
               aria-label="Reset password"
-              class="text-sm font-medium text-gemini-blue hover:text-gemini-blue-dark hover:underline transition-colors duration-200"
+              class="text-sm font-medium text-gemini-blue dark:text-blue-300 hover:text-gemini-blue-dark dark:hover:text-blue-200 hover:underline transition-colors duration-300"
             >
               Forgot Password?
             </button>
@@ -171,26 +184,30 @@ const signInWithGoogle = async () => {
             type="password"
             id="password"
             aria-label="Password"
-            class="block w-full px-4 py-3 border border-gemini-gray-300 rounded-lg bg-gemini-gray-100 focus:bg-white focus:outline-none focus:ring-2 focus:ring-gemini-blue transition-all duration-200"
+            class="block w-full px-4 py-3 border border-gray-400 dark:border-gray-500 rounded-lg bg-gray-100 dark:bg-gray-700 focus:bg-white dark:focus:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gemini-blue transition-all duration-300 text-gray-900 dark:text-gray-100"
             placeholder="••••••••"
             required
           />
         </div>
 
         <!-- Messages -->
-        <div v-if="errorMessage" class="p-3 rounded-lg bg-red-50">
-          <p class="text-red-700 text-sm text-center">{{ errorMessage }}</p>
-        </div>
-        <div v-if="successMessage" class="p-3 rounded-lg bg-green-50">
-          <p class="text-green-700 text-sm text-center">{{ successMessage }}</p>
-        </div>
+        <Transition name="fade-slide">
+          <div v-if="errorMessage" class="p-3 rounded-lg bg-red-50 dark:bg-red-900/50">
+            <p class="text-red-700 dark:text-red-300 text-sm text-center">{{ errorMessage }}</p>
+          </div>
+        </Transition>
+        <Transition name="fade-slide">
+          <div v-if="successMessage" class="p-3 rounded-lg bg-green-50 dark:bg-green-900/50">
+            <p class="text-green-700 dark:text-green-300 text-sm text-center">{{ successMessage }}</p>
+          </div>
+        </Transition>
 
         <!-- Sign In Button -->
         <button
           type="submit"
           :disabled="isLoading"
           aria-label="Sign in"
-          class="w-full flex justify-center py-3 px-4 border border-gray-300 rounded-full text-base font-medium text-gray-800 bg-white hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-400 transition-all duration-300 shadow-sm hover:shadow-md disabled:opacity-60 disabled:cursor-not-allowed"
+          class="w-full flex justify-center py-3 px-4 rounded-full text-base font-medium border border-gray-400 dark:border-gray-500 text-gray-800 dark:text-white bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gemini-blue transition-all duration-300 transform hover:scale-105 shadow-sm hover:shadow-md disabled:opacity-60 disabled:cursor-not-allowed"
         >
           {{ isLoading ? 'Signing In...' : 'Sign In' }}
         </button>
@@ -200,13 +217,32 @@ const signInWithGoogle = async () => {
 </template>
 
 <style scoped>
-.backdrop-blur-sm {
-  backdrop-filter: blur(8px);
+/* Smooth fade/slide animation for alerts */
+.fade-slide-enter-active,
+.fade-slide-leave-active {
+  transition: all 0.3s ease;
 }
-@media (max-width: 640px) {
-  .max-w-md {
-    max-width: 100%;
-    margin: 1rem;
+.fade-slide-enter-from {
+  opacity: 0;
+  transform: translateY(-8px);
+}
+.fade-slide-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
+}
+
+/* Page card fade-in animation */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.98);
   }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.animate-fade-in {
+  animation: fade-in 0.6s ease-out;
 }
 </style>
