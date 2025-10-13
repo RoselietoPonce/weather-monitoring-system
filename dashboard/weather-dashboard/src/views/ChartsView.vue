@@ -12,13 +12,15 @@
       </div>
 
       <!-- Control Panel -->
-      <div class="bg-[var(--color-surface)] rounded-2xl shadow-md p-6 mb-8 transition-colors">
-        <div class="flex items-center justify-between">
-          <h3 class="text-lg font-medium text-[var(--color-text-main)]">Data Time Range</h3>
+      <div
+        class="bg-[var(--color-surface)] rounded-2xl shadow-md p-6 mb-8 transition-colors border border-gray-200 dark:border-white/10"
+      >
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <h3 class="text-lg font-semibold text-[var(--color-text-main)]">Data Time Range</h3>
           <select
             v-model="selectedTimeRange"
             :disabled="isLoading"
-            class="bg-[var(--color-background)] border border-gray-300 dark:border-white/10 rounded-lg py-2 px-3 text-sm text-[var(--color-text-main)] focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+            class="bg-[var(--color-background)] border border-gray-300 dark:border-white/10 rounded-lg py-2 px-3 text-sm text-[var(--color-text-main)] focus:outline-none focus:ring-2 focus:ring-blue-500 transition disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <option value="last7">Last 7 Readings</option>
             <option value="weekly">Weekly</option>
@@ -29,9 +31,37 @@
       </div>
 
       <!-- Chart Display -->
-      <div class="bg-[var(--color-surface)] rounded-2xl shadow-md p-6 transition-colors">
-        <div v-memo="[processedChartData, isLoading]">
-          <WeatherChart :chart-data="processedChartData" :is-loading="isLoading" />
+      <div
+        class="bg-[var(--color-surface)] rounded-2xl shadow-md p-6 transition-colors border border-gray-200 dark:border-white/10 min-h-[400px] flex items-center justify-center"
+      >
+        <!-- Loading state -->
+        <div v-if="isLoading" class="flex items-center justify-center gap-3 text-gray-500">
+          <svg
+            class="animate-spin h-6 w-6 text-blue-500"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <circle
+              class="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              stroke-width="4"
+            ></circle>
+            <path
+              class="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8v4l3-3-3-3v4a12 12 0 00-12 12h4z"
+            ></path>
+          </svg>
+          <span>Loading chart data...</span>
+        </div>
+
+        <!-- Chart -->
+        <div v-else v-memo="[processedChartData]" class="w-full h-[400px]">
+          <WeatherChart :chart-data="processedChartData" />
         </div>
       </div>
     </div>
@@ -63,7 +93,7 @@ const chartData = ref({
   datasets: [
     {
       label: 'Temperature (°C)',
-      borderColor: 'rgba(239, 68, 68, 1)', // red-500
+      borderColor: 'rgba(239, 68, 68, 1)',
       backgroundColor: 'rgba(239, 68, 68, 0.2)',
       data: [],
       borderWidth: 2,
@@ -72,7 +102,7 @@ const chartData = ref({
     },
     {
       label: 'Humidity (%)',
-      borderColor: 'rgba(59, 130, 246, 1)', // blue-500
+      borderColor: 'rgba(59, 130, 246, 1)',
       backgroundColor: 'rgba(59, 130, 246, 0.2)',
       data: [],
       borderWidth: 2,
@@ -81,7 +111,7 @@ const chartData = ref({
     },
     {
       label: 'Rainfall (mm)',
-      borderColor: 'rgba(99, 102, 241, 1)', // indigo-500
+      borderColor: 'rgba(99, 102, 241, 1)',
       backgroundColor: 'rgba(99, 102, 241, 0.2)',
       data: [],
       borderWidth: 2,
@@ -106,30 +136,29 @@ const TIME_RANGES = {
   MONTHLY: 'monthly',
   YEARLY: 'yearly',
 }
-const DAYS_IN_RANGE = {
-  [TIME_RANGES.LAST_7]: 7,
-  [TIME_RANGES.WEEKLY]: 7,
-  [TIME_RANGES.MONTHLY]: 30,
-  [TIME_RANGES.YEARLY]: 365,
-}
 
 const formatTimestamp = (date, range) => {
   switch (range) {
     case TIME_RANGES.LAST_7:
       return date.toLocaleString([], { hour: '2-digit', minute: '2-digit' })
     case TIME_RANGES.WEEKLY:
-      return date.toLocaleString([], {
-        weekday: 'short',
-        month: 'short',
-        day: 'numeric',
-      })
+      return `Week ${getWeekNumber(date)}`
     case TIME_RANGES.MONTHLY:
-      return date.toLocaleString([], { month: 'short', day: 'numeric' })
+      return date.toLocaleString([], { month: 'short', year: 'numeric' })
     case TIME_RANGES.YEARLY:
-      return date.toLocaleString([], { month: 'long' })
+      return date.getFullYear().toString()
     default:
       return date.toLocaleString()
   }
+}
+
+// Get ISO week number
+function getWeekNumber(date) {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()))
+  const dayNum = d.getUTCDay() || 7
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum)
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1))
+  return Math.ceil(((d - yearStart) / 86400000 + 1) / 7)
 }
 
 const processRecords = (records, range) => {
@@ -141,12 +170,19 @@ const processRecords = (records, range) => {
       rain: records.map((r) => Number(r.rainfall) || 0),
     }
   }
+
   const groupedData = records.reduce((acc, record) => {
     const date = new Date(record.timestamp)
-    const key =
-      range === TIME_RANGES.YEARLY
-        ? `${date.getFullYear()}-${date.getMonth()}`
-        : `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`
+    let key
+
+    if (range === TIME_RANGES.WEEKLY) {
+      key = `${date.getFullYear()}-W${getWeekNumber(date)}`
+    } else if (range === TIME_RANGES.MONTHLY) {
+      key = `${date.getFullYear()}-${date.getMonth()}`
+    } else if (range === TIME_RANGES.YEARLY) {
+      key = `${date.getFullYear()}`
+    }
+
     if (!acc[key]) acc[key] = { timestamp: date, temps: [], hums: [], rains: [], count: 0 }
     acc[key].temps.push(Number(record.temperature) || 0)
     acc[key].hums.push(Number(record.humidity) || 0)
@@ -154,6 +190,7 @@ const processRecords = (records, range) => {
     acc[key].count++
     return acc
   }, {})
+
   const sortedGroups = Object.values(groupedData).sort((a, b) => a.timestamp - b.timestamp)
   const labels = [],
     temp = [],
@@ -177,10 +214,12 @@ const listenForHistoricalData = () => {
   const historyRef = dbRef(rtdb, 'sensor_logs')
   const range = selectedTimeRange.value
   let historyQuery
+
   if (range === TIME_RANGES.LAST_7) {
     historyQuery = query(historyRef, orderByChild('timestamp'), limitToLast(7))
   } else {
-    const startTime = Date.now() - DAYS_IN_RANGE[range] * 86400000
+    // Pull last 1 year of data to allow grouping
+    const startTime = Date.now() - 365 * 86400000
     historyQuery = query(historyRef, orderByChild('timestamp'), startAt(startTime))
   }
 

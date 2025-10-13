@@ -3,24 +3,26 @@ import { initializeApp } from 'firebase/app'
 import { getAuth } from 'firebase/auth'
 import { getDatabase } from 'firebase/database'
 import { getFirestore } from 'firebase/firestore'
+import { getStorage } from 'firebase/storage'
 
 const firebaseConfig = {
-  apiKey: 'AIzaSyCtavnWUJxu5bpcEvv5_WQGEHbhlqYydBM',
-  authDomain: 'weather-monitoring-syste-3c1ea.firebaseapp.com',
-  databaseURL:
-    'https://weather-monitoring-syste-3c1ea-default-rtdb.asia-southeast1.firebasedatabase.app',
-  projectId: 'weather-monitoring-syste-3c1ea',
-  storageBucket: 'weather-monitoring-syste-3c1ea.firebasestorage.app',
-  messagingSenderId: '522088136121',
-  appId: '1:522088136121:web:0d4a62ec896bca53170a68',
-  measurementId: 'G-DZPJWXG5J0',
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID,
 }
 
 const app = initializeApp(firebaseConfig)
 
 // --- Definitive Exports ---
 export const auth = getAuth(app)
-// 'db' is ALWAYS Firestore (for Alerts, Profiles)
+// Firestore (for Alerts, Profiles, etc.)
 export const db = getFirestore(app)
-// 'rtdb' is ALWAYS the Realtime Database (for sensor data)
+// Realtime Database (for sensor data)
 export const rtdb = getDatabase(app)
+// ✅ Storage (for ML model upload/download, images, etc.)
+export const storage = getStorage(app)

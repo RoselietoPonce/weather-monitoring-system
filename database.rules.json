@@ -1,0 +1,9 @@
+{
+  "rules": {
+    ".read": "true",
+    ".write": "true",
+    "sensor_logs": {
+      ".indexOn": "timestamp"
+    }
+  }
+}

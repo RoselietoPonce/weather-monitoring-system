@@ -3,8 +3,7 @@
 </template>
 
 <script setup>
-import { useTheme } from '@/composables/useTheme.js'
-
-// Initialize the theme manager to apply the theme on app load
-useTheme()
+// Import useTheme to initialize the theme manager on application startup.
+// The theme is applied automatically when this module is imported.
+import '@/composables/useTheme.js'
 </script>

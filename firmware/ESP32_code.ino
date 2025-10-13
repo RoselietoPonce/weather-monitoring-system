@@ -28,7 +28,7 @@ DHT dht_sensor(DHT_SENSOR_PIN, DHT_SENSOR_TYPE);
 
 // --- TIMING ---
 unsigned long sendDataPrevMillis = 0;
-unsigned long dataSendInterval = 3000;
+unsigned long dataSendInterval = 5000;
 
 // --- TOKEN STATUS CALLBACK ---
 void tokenStatusCallback(TokenInfo info)
@@ -61,14 +61,14 @@ void setup()
   Serial.println(WiFi.localIP());
   Serial.println();
 
-  // --- NEW: TIME SYNCHRONIZATION (THIS IS THE FIX) ---
+  // --- TIME SYNCHRONIZATION (Your improved version) ---
   Serial.println("Configuring time...");
   configTime(8 * 3600, 0, "pool.ntp.org"); // GMT+8
   Serial.print("Waiting for time synchronization");
 
   time_t now = time(nullptr);
   unsigned long start = millis();
-  while (now < 24 * 3600 && millis() - start < 10000)
+  while (now < 24 * 3600 && millis() - start < 30000)
   { // 10-second timeout
     delay(500);
     Serial.print(".");
@@ -83,15 +83,11 @@ void setup()
   {
     struct tm timeinfo;
     gmtime_r(&now, &timeinfo);
-    Serial.println("\nCurrent time: " + String(asctime(&timeinfo)));
+    Serial.println(""); // Newline for cleaner output
+    Serial.print("Current time: ");
+    Serial.print(asctime(&timeinfo));
   }
-
-  struct tm timeinfo;
-  gmtime_r(&now, &timeinfo);
-  Serial.println("");
-  Serial.print("Current time: ");
-  Serial.print(asctime(&timeinfo));
-  // --- END OF FIX ---
+  // --- END OF TIME SYNC SECTION ---
 
   // --- FIREBASE CONFIG ---
   config.api_key = API_KEY;

@@ -242,28 +242,60 @@ const aggregatedData = computed(() => {
 
     switch (period) {
       case 'yearly':
-        return `${year}`
+        return { key: `${year}-01-01`, label: `Year ${year}` }
+
       case 'monthly':
-        return `${year}-${String(month + 1).padStart(2, '0')}`
+        return {
+          key: `${year}-${String(month + 1).padStart(2, '0')}-01`,
+          label: date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+        }
+
       case 'weekly': {
-        // ISO week (starting Monday)
         const tmp = new Date(date)
-        const day = tmp.getDay() || 7
-        tmp.setDate(tmp.getDate() - day + 1)
-        return tmp.toISOString().split('T')[0]
+
+        // Sunday = 0, Monday = 1, ..., Saturday = 6
+        const day = tmp.getDay()
+
+        // Move back to Sunday
+        tmp.setDate(tmp.getDate() - day)
+        const startOfWeek = new Date(tmp)
+
+        // End of week = Saturday
+        const endOfWeek = new Date(tmp)
+        endOfWeek.setDate(startOfWeek.getDate() + 6)
+
+        return {
+          key: startOfWeek.toISOString().split('T')[0],
+          label: `${startOfWeek.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+          })} - ${endOfWeek.toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+          })}`,
+        }
       }
+
       case 'daily':
       default:
-        return date.toISOString().split('T')[0]
+        return {
+          key: date.toISOString().split('T')[0],
+          label: date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+          }),
+        }
     }
   }
 
   const groups = {}
 
   rawReportData.value.forEach((record) => {
-    const key = getGroupKey(record, groupBy.value)
+    const { key, label } = getGroupKey(record, groupBy.value)
     if (!groups[key]) {
       groups[key] = {
+        label,
         tempSum: 0,
         tempCount: 0,
         humiditySum: 0,
@@ -287,18 +319,23 @@ const aggregatedData = computed(() => {
     groups[key].recordCount++
   })
 
-  return Object.keys(groups)
-    .map((key) => {
-      const group = groups[key]
-      return {
-        period: key,
-        temperature: group.tempCount > 0 ? (group.tempSum / group.tempCount).toFixed(1) : 'N/A',
-        humidity:
-          group.humidityCount > 0 ? (group.humiditySum / group.humidityCount).toFixed(0) : 'N/A',
-        rainfall: group.rainfallSum.toFixed(1),
-      }
-    })
-    .sort((a, b) => new Date(b.period) - new Date(a.period)) // Sort descending by actual date
+  return (
+    Object.keys(groups)
+      .map((key) => {
+        const group = groups[key]
+        return {
+          period: group.label,
+          temperature: group.tempCount > 0 ? (group.tempSum / group.tempCount).toFixed(1) : 'N/A',
+          humidity:
+            group.humidityCount > 0 ? (group.humiditySum / group.humidityCount).toFixed(0) : 'N/A',
+          rainfall: group.rainfallSum.toFixed(1),
+          // sortKey only used internally
+          sortKey: key,
+        }
+      })
+      // ✅ Sort oldest → newest
+      .sort((a, b) => new Date(a.sortKey) - new Date(b.sortKey))
+  )
 })
 
 // Export CSV
@@ -306,7 +343,14 @@ const exportToCSV = () => {
   if (!aggregatedData.value.length) return
   isExporting.value = true
   try {
-    const csv = Papa.unparse(aggregatedData.value)
+    const csv = Papa.unparse(
+      aggregatedData.value.map(({ period, temperature, humidity, rainfall }) => ({
+        period,
+        temperature,
+        humidity,
+        rainfall,
+      })),
+    )
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
     const link = document.createElement('a')
     link.href = URL.createObjectURL(blob)

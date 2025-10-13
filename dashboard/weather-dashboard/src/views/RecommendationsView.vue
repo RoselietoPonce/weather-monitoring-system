@@ -51,7 +51,7 @@
             class="w-full sm:w-auto flex items-center justify-center px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg shadow-sm hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
           >
             <Icon icon="ph:sparkle-bold" class="h-5 w-5 mr-2" />
-            {{ isGenerating ? 'Analyzing...' : 'Regenerate' }}
+            {{ isGenerating ? 'Analyzing...' : 'Generate' }}
           </button>
         </div>
       </div>
@@ -127,7 +127,7 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref } from 'vue'
 import { rtdb } from '@/firebase.js'
 import { query, ref as dbRef, orderByChild, get, startAt } from 'firebase/database'
 import { Icon } from '@iconify/vue'
@@ -135,7 +135,7 @@ import { useWeatherData } from '@/composables/useWeatherData.js'
 
 // --- CONFIGURATION ---
 const GEMINI_API_KEY = 'AIzaSyD0qDNzCaAvWc0skFlIZftZjYvBw1pUSeA'
-const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${GEMINI_API_KEY}`
+const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${GEMINI_API_KEY}`
 
 const props = defineProps({
   deviceAddress: { type: String, default: 'Philippines' },
@@ -145,7 +145,7 @@ const { latestData, isLoading: isDataLoading } = useWeatherData()
 
 const historicalSummary = ref(null)
 const recommendations = ref([])
-const isGenerating = ref(true)
+const isGenerating = ref(false)
 const generationError = ref(null)
 
 // --- Fetch historical rainfall data ---
@@ -176,7 +176,7 @@ const fetchHistoricalData = async () => {
 
 // --- Gemini API Call ---
 const generateAIAssistantResponse = async (prompt) => {
-  if (!GEMINI_API_KEY || GEMINI_API_KEY === 'YOUR_API_KEY_HERE') {
+  if (!GEMINI_API_KEY || GEMINI_API_KEY === 'YOUR_API_KEY') {
     throw new Error('Gemini API key is not set. Please add it in the script.')
   }
 
@@ -293,11 +293,4 @@ const getIconDetails = (category) => {
       }
   }
 }
-
-// --- Auto-trigger generation ---
-watch(latestData, (newData, oldData) => {
-  if (newData && (oldData === null || oldData === undefined)) {
-    handleGenerate()
-  }
-})
 </script>

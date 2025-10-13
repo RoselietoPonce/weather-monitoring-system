@@ -5,15 +5,22 @@
       <div
         v-for="i in 3"
         :key="i"
-        class="bg-[var(--color-surface)]/80 backdrop-blur-sm rounded-2xl shadow-sm p-6 animate-pulse
-               transition-colors duration-500"
+        class="bg-[var(--color-surface)]/80 backdrop-blur-sm rounded-2xl shadow-sm p-6 animate-pulse transition-colors duration-500"
       >
         <div class="flex items-center justify-between mb-4">
-          <div class="h-8 w-24 bg-[var(--color-text-light)]/20 rounded-md transition-colors duration-500"></div>
-          <div class="h-10 w-10 bg-[var(--color-text-light)]/20 rounded-full transition-colors duration-500"></div>
+          <div
+            class="h-8 w-24 bg-[var(--color-text-light)]/20 rounded-md transition-colors duration-500"
+          ></div>
+          <div
+            class="h-10 w-10 bg-[var(--color-text-light)]/20 rounded-full transition-colors duration-500"
+          ></div>
         </div>
-        <div class="h-12 w-32 bg-[var(--color-text-light)]/20 rounded-md mb-4 transition-colors duration-500"></div>
-        <div class="h-16 bg-[var(--color-text-light)]/20 rounded-md transition-colors duration-500"></div>
+        <div
+          class="h-12 w-32 bg-[var(--color-text-light)]/20 rounded-md mb-4 transition-colors duration-500"
+        ></div>
+        <div
+          class="h-16 bg-[var(--color-text-light)]/20 rounded-md transition-colors duration-500"
+        ></div>
       </div>
     </template>
 
@@ -22,29 +29,28 @@
       <div
         v-for="card in weatherData"
         :key="card.id"
-        class="bg-[var(--color-surface)]/80 backdrop-blur-sm rounded-2xl shadow-sm p-6
-               transition-all duration-500 ease-in-out
-               hover:shadow-xl hover:-translate-y-1 flex flex-col"
+        class="bg-[var(--color-surface)]/80 backdrop-blur-sm rounded-2xl shadow-sm p-6 transition-all duration-500 ease-in-out hover:shadow-xl hover:-translate-y-1 flex flex-col"
       >
         <!-- Card Header -->
         <div class="flex items-center justify-between mb-4">
           <h3 class="font-semibold text-[var(--color-text-light)] transition-colors duration-500">
             {{ card.title }}
           </h3>
-          <div
-            class="p-2 rounded-full transition-all duration-500"
-            :class="card.bgColor"
-          >
+          <div class="p-2 rounded-full transition-all duration-500" :class="card.bgColor">
             <Icon :icon="card.icon" class="h-6 w-6" :class="card.color" />
           </div>
         </div>
 
         <!-- Main Value -->
         <div class="mb-4">
-          <span class="text-4xl font-bold text-[var(--color-text-main)] transition-colors duration-500">
+          <span
+            class="text-4xl font-bold text-[var(--color-text-main)] transition-colors duration-500"
+          >
             {{ card.value }}
           </span>
-          <span class="text-xl font-medium text-[var(--color-text-light)] ml-1 transition-colors duration-500">
+          <span
+            class="text-xl font-medium text-[var(--color-text-light)] ml-1 transition-colors duration-500"
+          >
             {{ card.unit }}
           </span>
         </div>

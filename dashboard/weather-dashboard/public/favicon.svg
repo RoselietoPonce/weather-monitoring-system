@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <style>
+    :root {
+      --cloud-color: #FFFFFF;
+      --cloud-stroke: #B0BEC5;
+      --sparkline-color: #42A5F5;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --cloud-color: #37474F;
+        --cloud-stroke: #546E7A;
+        --sparkline-color: #81D4FA;
+      }
+    }
+
+    /* --- Keyframe Animation for the Sparkline --- */
+    @keyframes draw {
+      from {
+        stroke-dashoffset: 150;
+      }
+      to {
+        stroke-dashoffset: 0;
+      }
+    }
+
+    .cloud-shape {
+      fill: var(--cloud-color);
+      stroke: var(--cloud-stroke);
+      stroke-width: 4;
+      stroke-linejoin: round;
+    }
+
+    .sparkline {
+      fill: none;
+      stroke: var(--sparkline-color);
+      stroke-width: 5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-dasharray: 150;
+      animation: draw 5s linear infinite;
+    }
+  </style>
+
+  <!-- Cloud Shape -->
+  <path class="cloud-shape" d="M 20 75 C 5 75 5 55 20 55 C 25 55 25 40 45 40 C 70 40 70 65 45 65 C 80 65 80 85 50 85 Z" />
+
+  <!-- Animated Sparkline inside the cloud -->
+  <polyline class="sparkline" points="30,65 40,55 50,60 60,50 70,60" />
+</svg>

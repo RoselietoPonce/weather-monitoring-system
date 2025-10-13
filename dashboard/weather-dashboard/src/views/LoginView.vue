@@ -18,15 +18,20 @@ const isLoading = ref(false)
 
 const router = useRouter()
 
+// --- Helper to clear messages ---
+const clearMessages = () => {
+  errorMessage.value = ''
+  successMessage.value = ''
+}
+
 // --- Email/Password Sign In ---
 const signIn = async () => {
   try {
     isLoading.value = true
+    clearMessages()
     const userCredential = await signInWithEmailAndPassword(auth, email.value, password.value)
     console.log('Successfully signed in:', userCredential.user)
-    errorMessage.value = ''
-    successMessage.value = ''
-    router.push('/')
+    router.push({ name: 'dashboard' }) // ✅ make sure 'dashboard' exists in routes
   } catch (error) {
     console.error('Login Error:', error.message)
     successMessage.value = ''
@@ -58,7 +63,7 @@ const handlePasswordReset = async () => {
   }
   try {
     await sendPasswordResetEmail(auth, email.value)
-    errorMessage.value = ''
+    clearMessages()
     successMessage.value = `A password reset link has been sent to ${email.value}. Please check your inbox.`
   } catch (error) {
     console.error('Password Reset Error:', error.message)
@@ -82,14 +87,23 @@ const signInWithGoogle = async () => {
   const provider = new GoogleAuthProvider()
   try {
     isLoading.value = true
+    clearMessages()
     const result = await signInWithPopup(auth, provider)
     console.log('Successfully signed in with Google:', result.user)
-    errorMessage.value = ''
-    successMessage.value = ''
-    router.push('/')
+    router.push({ name: 'dashboard' })
   } catch (error) {
     console.error('Google Sign-In Error:', error)
-    errorMessage.value = `Failed to sign in with Google. ${error.message}`
+    switch (error.code) {
+      case 'auth/popup-closed-by-user':
+        errorMessage.value = 'Google sign-in was canceled.'
+        break
+      case 'auth/network-request-failed':
+        errorMessage.value = 'Network error. Please check your connection.'
+        break
+      default:
+        errorMessage.value = `Failed to sign in with Google.`
+        break
+    }
   } finally {
     isLoading.value = false
   }
@@ -98,7 +112,7 @@ const signInWithGoogle = async () => {
 
 <template>
   <div
-    class="min-h-screen flex items-center justify-center bg-gemini-gray-100 dark:bg-gray-900 p-4 transition-colors duration-500"
+    class="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 p-4 transition-colors duration-500"
   >
     <div
       class="max-w-md w-full bg-white dark:bg-gray-800 rounded-2xl shadow-lg p-8 space-y-8 transition-all duration-500 transform hover:scale-[1.01] animate-fade-in"
@@ -107,10 +121,10 @@ const signInWithGoogle = async () => {
       <div class="text-center">
         <Icon
           icon="ph:cloud-sun-bold"
-          class="h-12 w-12 text-gemini-blue-dark dark:text-blue-400 mx-auto mb-4 transition-transform duration-500 hover:rotate-12"
+          class="h-12 w-12 text-blue-600 dark:text-blue-400 mx-auto mb-4 transition-transform duration-500 hover:rotate-12"
         />
-        <h2 class="text-3xl font-bold text-gemini-gray-900 dark:text-white">Welcome Back</h2>
-        <p class="text-gemini-gray-600 dark:text-gray-300 mt-2">Sign in to access your dashboard</p>
+        <h2 class="text-3xl font-bold text-gray-900 dark:text-white">Welcome Back</h2>
+        <p class="text-gray-600 dark:text-gray-300 mt-2">Sign in to access your dashboard</p>
       </div>
 
       <!-- Social Sign-in -->
@@ -119,12 +133,15 @@ const signInWithGoogle = async () => {
         type="button"
         :disabled="isLoading"
         aria-label="Sign in with Google"
-        class="w-full flex items-center justify-center py-3 px-4 rounded-full shadow-sm border border-gray-400 dark:border-gray-500 bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gemini-blue transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed group"
+        class="w-full flex items-center justify-center py-3 px-4 rounded-full shadow-sm border border-gray-400 dark:border-gray-500 bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed group"
       >
-        <Icon icon="flat-color-icons:google" class="h-5 w-5" />
-        <span
-          class="ml-3 text-sm font-medium text-gray-800 dark:text-gray-200 group-hover:text-gray-900 dark:group-hover:text-white"
-        >
+        <Icon v-if="!isLoading" icon="flat-color-icons:google" class="h-5 w-5" />
+        <Icon
+          v-else
+          icon="eos-icons:loading"
+          class="h-5 w-5 animate-spin text-blue-600 dark:text-blue-400"
+        />
+        <span class="ml-3 text-sm font-medium">
           {{ isLoading ? 'Please wait...' : 'Sign in with Google' }}
         </span>
       </button>
@@ -141,6 +158,7 @@ const signInWithGoogle = async () => {
         </div>
       </div>
 
+      <!-- Email/Password Form -->
       <form @submit.prevent="signIn" class="space-y-6">
         <!-- Email -->
         <div>
@@ -155,7 +173,7 @@ const signInWithGoogle = async () => {
             type="email"
             id="email"
             aria-label="Email Address"
-            class="block w-full px-4 py-3 border border-gray-400 dark:border-gray-500 rounded-lg bg-gray-100 dark:bg-gray-700 focus:bg-white dark:focus:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gemini-blue transition-all duration-300 text-gray-900 dark:text-gray-100"
+            class="block w-full px-4 py-3 border border-gray-400 dark:border-gray-500 rounded-lg bg-gray-100 dark:bg-gray-700 focus:bg-white dark:focus:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 text-gray-900 dark:text-gray-100"
             placeholder="you@example.com"
             required
           />
@@ -173,8 +191,9 @@ const signInWithGoogle = async () => {
             <button
               @click.prevent="handlePasswordReset"
               type="button"
+              :disabled="isLoading"
               aria-label="Reset password"
-              class="text-sm font-medium text-gemini-blue dark:text-blue-300 hover:text-gemini-blue-dark dark:hover:text-blue-200 hover:underline transition-colors duration-300"
+              class="text-sm font-medium text-blue-600 dark:text-blue-300 hover:text-blue-800 dark:hover:text-blue-200 hover:underline transition-colors duration-300 disabled:opacity-50"
             >
               Forgot Password?
             </button>
@@ -184,7 +203,7 @@ const signInWithGoogle = async () => {
             type="password"
             id="password"
             aria-label="Password"
-            class="block w-full px-4 py-3 border border-gray-400 dark:border-gray-500 rounded-lg bg-gray-100 dark:bg-gray-700 focus:bg-white dark:focus:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gemini-blue transition-all duration-300 text-gray-900 dark:text-gray-100"
+            class="block w-full px-4 py-3 border border-gray-400 dark:border-gray-500 rounded-lg bg-gray-100 dark:bg-gray-700 focus:bg-white dark:focus:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300 text-gray-900 dark:text-gray-100"
             placeholder="••••••••"
             required
           />
@@ -198,7 +217,9 @@ const signInWithGoogle = async () => {
         </Transition>
         <Transition name="fade-slide">
           <div v-if="successMessage" class="p-3 rounded-lg bg-green-50 dark:bg-green-900/50">
-            <p class="text-green-700 dark:text-green-300 text-sm text-center">{{ successMessage }}</p>
+            <p class="text-green-700 dark:text-green-300 text-sm text-center">
+              {{ successMessage }}
+            </p>
           </div>
         </Transition>
 
@@ -207,8 +228,13 @@ const signInWithGoogle = async () => {
           type="submit"
           :disabled="isLoading"
           aria-label="Sign in"
-          class="w-full flex justify-center py-3 px-4 rounded-full text-base font-medium border border-gray-400 dark:border-gray-500 text-gray-800 dark:text-white bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gemini-blue transition-all duration-300 transform hover:scale-105 shadow-sm hover:shadow-md disabled:opacity-60 disabled:cursor-not-allowed"
+          class="w-full flex justify-center items-center gap-2 py-3 px-4 rounded-full text-base font-medium border border-gray-400 dark:border-gray-500 text-gray-800 dark:text-white bg-white dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all duration-300 transform hover:scale-105 shadow-sm hover:shadow-md disabled:opacity-60 disabled:cursor-not-allowed"
         >
+          <Icon
+            v-if="isLoading"
+            icon="eos-icons:loading"
+            class="h-5 w-5 animate-spin text-blue-600 dark:text-blue-400"
+          />
           {{ isLoading ? 'Signing In...' : 'Sign In' }}
         </button>
       </form>
@@ -217,7 +243,6 @@ const signInWithGoogle = async () => {
 </template>
 
 <style scoped>
-/* Smooth fade/slide animation for alerts */
 .fade-slide-enter-active,
 .fade-slide-leave-active {
   transition: all 0.3s ease;
@@ -230,8 +255,10 @@ const signInWithGoogle = async () => {
   opacity: 0;
   transform: translateY(-8px);
 }
+</style>
 
-/* Page card fade-in animation */
+<style>
+/* ✅ animation moved global so it applies */
 @keyframes fade-in {
   from {
     opacity: 0;

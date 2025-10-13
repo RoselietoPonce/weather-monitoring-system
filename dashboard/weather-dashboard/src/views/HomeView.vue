@@ -39,9 +39,11 @@
 
               <!-- Status Label -->
               <span
-                :class="isOnline
-                  ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
-                  : 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300'"
+                :class="
+                  isOnline
+                    ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
+                    : 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-300'
+                "
                 class="px-2 py-0.5 rounded-full text-xs font-medium transition-colors duration-200"
               >
                 {{ isOnline ? 'Online' : 'Offline' }}
@@ -64,6 +66,11 @@
 
       <!-- Weather Cards -->
       <WeatherCards :weather-data="weatherData" :is-loading="isLoading" />
+
+      <!-- Predictive Insight Card -->
+      <section class="mt-10">
+        <InsightCard />
+      </section>
 
       <!-- Map Section -->
       <section class="mt-10">
@@ -93,28 +100,29 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, computed } from 'vue'
-import { rtdb } from '@/firebase.js'
-import { ref as dbRef, onValue, off } from 'firebase/database'
+import { computed, watchEffect, ref } from 'vue'
+import { useWeatherData } from '@/composables/useWeatherData'
 
 // Components
 import WeatherCards from '@/components/WeatherCards.vue'
 import WeatherMap from '@/components/WeatherMap.vue'
+import InsightCard from '@/components/InsightCard.vue'
 
-// Reactive state
-const temperature = ref('N/A')
-const humidity = ref('N/A')
-const rainfall = ref('N/A')
-const isLoading = ref(false)
+// Centralized weather data
+const { latestData, isLoading } = useWeatherData()
+
+// Reactive state for map
 const mapCenter = ref(null)
 const markerLatLng = ref(null)
 const deviceAddress = ref('Weather Station Location')
-const lastUpdated = ref(null)
 
-let latestDataRef = null
-let latestDataCallback = null
+// Computed properties derived from the composable's state
+const temperature = computed(() => latestData.value?.temperature?.toFixed(1) ?? 'N/A')
+const humidity = computed(() => latestData.value?.humidity?.toFixed(0) ?? 'N/A')
+const rainfall = computed(() => latestData.value?.rainfall?.toFixed(1) ?? 'N/A')
+const lastUpdated = computed(() => latestData.value?.timestamp)
 
-// Computed: Device status
+// Device status
 const isOnline = computed(() => {
   if (!lastUpdated.value) return false
   return Date.now() - lastUpdated.value < 30000 // within 30s considered online
@@ -129,7 +137,8 @@ const weatherData = computed(() => [
     unit: '°C',
     icon: 'ph:thermometer-cold-bold',
     color: 'text-red-600 dark:text-red-400',
-    bgColor: 'bg-red-200 dark:bg-red-900/40 hover:shadow-lg hover:scale-[1.02] transition-all duration-300',
+    bgColor:
+      'bg-red-200 dark:bg-red-900/40 hover:shadow-lg hover:scale-[1.02] transition-all duration-300',
   },
   {
     id: 'humidity',
@@ -138,7 +147,8 @@ const weatherData = computed(() => [
     unit: '%',
     icon: 'ph:drop-bold',
     color: 'text-blue-600 dark:text-blue-400',
-    bgColor: 'bg-blue-200 dark:bg-blue-900/40 hover:shadow-lg hover:scale-[1.02] transition-all duration-300',
+    bgColor:
+      'bg-blue-200 dark:bg-blue-900/40 hover:shadow-lg hover:scale-[1.02] transition-all duration-300',
   },
   {
     id: 'rainfall',
@@ -147,14 +157,16 @@ const weatherData = computed(() => [
     unit: 'mm',
     icon: 'ph:cloud-rain-bold',
     color: 'text-indigo-600 dark:text-indigo-400',
-    bgColor: 'bg-indigo-200 dark:bg-indigo-900/40 hover:shadow-lg hover:scale-[1.02] transition-all duration-300',
+    bgColor:
+      'bg-indigo-200 dark:bg-indigo-900/40 hover:shadow-lg hover:scale-[1.02] transition-all duration-300',
   },
 ])
 
-// Update device location
-const updateDeviceLocation = (data) => {
-  try {
-    if (data.location) {
+// Watch for changes in latestData to update the map
+watchEffect(() => {
+  const data = latestData.value
+  if (data?.location) {
+    try {
       const { lat, lng, address } = data.location
       const latNum = Number(lat)
       const lngNum = Number(lng)
@@ -164,46 +176,9 @@ const updateDeviceLocation = (data) => {
         markerLatLng.value = [latNum, lngNum]
         deviceAddress.value = address || 'Weather Station Location'
       }
+    } catch (error) {
+      console.error('Error updating device location:', error)
     }
-  } catch (error) {
-    console.error('Error updating device location:', error)
-  }
-}
-
-// Firebase listener
-onMounted(() => {
-  isLoading.value = true
-  latestDataRef = dbRef(rtdb, 'sensor_data/latest')
-
-  latestDataCallback = (snapshot) => {
-    const data = snapshot.val()
-    if (data) {
-      const temp = Number(data.temperature)
-      const hum = Number(data.humidity)
-      const rain = Number(data.rainfall)
-
-      temperature.value = !isNaN(temp) ? temp.toFixed(1) : 'N/A'
-      humidity.value = !isNaN(hum) ? hum.toFixed(0) : 'N/A'
-      rainfall.value = !isNaN(rain) ? rain.toFixed(1) : 'N/A'
-
-      // ✅ Prefer device timestamp if available
-      lastUpdated.value = data.timestamp || Date.now()
-
-      updateDeviceLocation(data)
-    }
-    isLoading.value = false
-  }
-
-  onValue(latestDataRef, latestDataCallback, (error) => {
-    console.error('Error setting up data listeners:', error)
-    isLoading.value = false
-  })
-})
-
-// Cleanup listener
-onUnmounted(() => {
-  if (latestDataRef && latestDataCallback) {
-    off(latestDataRef, latestDataCallback) // ✅ simplified
   }
 })
 </script>

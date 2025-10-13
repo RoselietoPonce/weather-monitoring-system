@@ -1,8 +1,6 @@
 <template>
   <aside
-    class="flex flex-col bg-[var(--color-surface)] text-[var(--color-text-main)] h-screen
-           border-r border-[var(--color-hover)]
-           transition-all duration-500 ease-in-out"
+    class="flex flex-col bg-[var(--color-surface)] text-[var(--color-text-main)] h-screen border-r border-[var(--color-hover)] transition-all duration-500 ease-in-out"
     :class="isExpanded ? 'w-64' : 'w-20'"
   >
     <!-- Main Navigation with Toggle -->
@@ -10,10 +8,7 @@
       <!-- Hamburger Toggle -->
       <button
         @click="isExpanded = !isExpanded"
-        class="flex items-center w-full p-3 mb-4 rounded-full
-               bg-[var(--color-surface)] shadow hover-bg-hover
-               transition-all duration-300 ease-in-out
-               focus:outline-none focus:ring-0"
+        class="flex items-center w-full p-3 mb-4 rounded-xl bg-[var(--color-surface)] shadow-sm hover:bg-[var(--color-primary)]/5 transition-all duration-300 ease-in-out focus:outline-none focus:ring-0"
         :class="{ 'justify-center': !isExpanded }"
         :title="isExpanded ? 'Collapse Sidebar' : 'Expand Sidebar'"
         aria-label="Toggle Sidebar"
@@ -22,9 +17,7 @@
           :icon="isExpanded ? 'ph:x-bold' : 'ph:list-bold'"
           class="h-5 w-5 text-[var(--color-text-light)] transition-all duration-300 ease-in-out"
         />
-        <span v-if="isExpanded" class="ml-4 font-medium transition-all duration-300 ease-in-out">
-          Menu
-        </span>
+        <span v-if="isExpanded" class="ml-4 font-medium">Menu</span>
       </button>
 
       <!-- Navigation Items -->
@@ -38,30 +31,25 @@
         <a
           :href="href"
           @click="navigate"
-          class="relative flex items-center p-3 rounded-full group
-                 transition-all duration-300 ease-in-out
-                 focus:outline-none focus:ring-0"
+          class="relative flex items-center p-3 rounded-xl group transition-all duration-300 ease-in-out focus:outline-none focus:ring-0"
           :class="[
             isExpanded ? '' : 'justify-center',
             (item.routeName === 'dashboard' ? isExactActive : isActive)
-              ? 'bg-[var(--color-background)] text-[var(--color-primary)] font-semibold border-l-4 border-[var(--color-primary)]'
-              : 'text-[var(--color-text-light)] hover-bg-hover hover:text-[var(--color-primary)]'
+              ? 'bg-[var(--color-primary)]/10 text-[var(--color-primary)] font-medium'
+              : 'text-[var(--color-text-light)] opacity-80 hover:bg-[var(--color-primary)]/5 hover:text-[var(--color-primary)]',
           ]"
           :aria-label="item.name"
         >
-          <Icon :icon="item.icon" class="h-6 w-6 flex-shrink-0 transition-all duration-300 ease-in-out" />
-          <span
-            v-if="isExpanded"
-            class="ml-4 font-medium transition-all duration-300 ease-in-out sidebar-label"
-          >
-            {{ item.name }}
-          </span>
+          <Icon
+            :icon="item.icon"
+            class="h-6 w-6 flex-shrink-0 transition-all duration-300 ease-in-out"
+          />
+          <span v-if="isExpanded" class="ml-4 font-medium sidebar-label">{{ item.name }}</span>
+
           <!-- Tooltip when collapsed -->
           <span
             v-if="!isExpanded"
-            class="absolute left-full ml-4 px-2 py-1 text-sm font-medium text-white
-                   bg-gray-900 rounded-md opacity-0 group-hover:opacity-100
-                   whitespace-nowrap transition-all duration-300 ease-in-out"
+            class="absolute left-full ml-4 px-2 py-1 text-sm font-medium text-white bg-gray-900 rounded-md opacity-0 group-hover:opacity-100 whitespace-nowrap transition-all duration-300 ease-in-out"
           >
             {{ item.name }}
           </span>
@@ -70,30 +58,28 @@
     </nav>
 
     <!-- Footer Navigation -->
-    <div class="px-4 py-4 space-y-2 border-t border-[var(--color-hover)] transition-all duration-500 ease-in-out">
+    <div
+      class="px-4 py-4 space-y-2 border-t border-[var(--color-hover)] transition-all duration-500 ease-in-out"
+    >
       <!-- Profile -->
       <router-link to="/profile" custom v-slot="{ href, navigate, isActive }">
         <a
           :href="href"
           @click="navigate"
-          class="relative flex items-center p-3 rounded-full group
-                 transition-all duration-300 ease-in-out
-                 focus:outline-none focus:ring-0"
+          class="relative flex items-center p-3 rounded-xl group transition-all duration-300 ease-in-out focus:outline-none focus:ring-0"
           :class="[
             isExpanded ? '' : 'justify-center',
             isActive
-              ? 'bg-[var(--color-background)] text-[var(--color-primary)] font-semibold border-l-4 border-[var(--color-primary)]'
-              : 'text-[var(--color-text-light)] hover-bg-hover hover:text-[var(--color-primary)]'
+              ? 'bg-[var(--color-primary)]/10 text-[var(--color-primary)] font-medium'
+              : 'text-[var(--color-text-light)] opacity-80 hover:bg-[var(--color-primary)]/5 hover:text-[var(--color-primary)]',
           ]"
           aria-label="Profile"
         >
-          <Icon icon="ph:user-circle-bold" class="h-6 w-6 flex-shrink-0 transition-all duration-300 ease-in-out" />
-          <span v-if="isExpanded" class="ml-4 font-medium transition-all duration-300 ease-in-out">Profile</span>
+          <Icon icon="ph:user-circle-bold" class="h-6 w-6 flex-shrink-0" />
+          <span v-if="isExpanded" class="ml-4 font-medium">Profile</span>
           <span
             v-if="!isExpanded"
-            class="absolute left-full ml-4 px-2 py-1 text-sm font-medium text-white
-                   bg-gray-900 rounded-md opacity-0 group-hover:opacity-100
-                   transition-all duration-300 ease-in-out"
+            class="absolute left-full ml-4 px-2 py-1 text-sm font-medium text-white bg-gray-900 rounded-md opacity-0 group-hover:opacity-100 transition-all duration-300 ease-in-out"
           >
             Profile
           </span>
@@ -103,21 +89,15 @@
       <!-- Logout -->
       <button
         @click="handleLogout"
-        class="relative flex w-full items-center p-3 rounded-full group
-               text-[var(--color-text-light)]
-               hover:text-red-500 hover:bg-[var(--color-hover)]
-               transition-all duration-300 ease-in-out
-               focus:outline-none focus:ring-0"
+        class="relative flex w-full items-center p-3 rounded-xl group text-[var(--color-text-light)] opacity-80 hover:bg-[var(--color-primary)]/5 hover:text-[var(--color-primary)] transition-all duration-300 ease-in-out focus:outline-none focus:ring-0"
         :class="{ 'justify-center': !isExpanded }"
         aria-label="Logout"
       >
-        <Icon icon="ph:sign-out-bold" class="h-6 w-6 flex-shrink-0 transition-all duration-300 ease-in-out" />
-        <span v-if="isExpanded" class="ml-4 font-medium transition-all duration-300 ease-in-out">Logout</span>
+        <Icon icon="ph:sign-out-bold" class="h-6 w-6 flex-shrink-0" />
+        <span v-if="isExpanded" class="ml-4 font-medium">Logout</span>
         <span
           v-if="!isExpanded"
-          class="absolute left-full ml-4 px-2 py-1 text-sm font-medium text-white
-                 bg-gray-900 rounded-md opacity-0 group-hover:opacity-100
-                 transition-all duration-300 ease-in-out"
+          class="absolute left-full ml-4 px-2 py-1 text-sm font-medium text-white bg-gray-900 rounded-md opacity-0 group-hover:opacity-100 transition-all duration-300 ease-in-out"
         >
           Logout
         </span>
@@ -156,6 +136,8 @@ const handleLogout = async () => {
 
 <style scoped>
 .sidebar-label {
-  transition: opacity 0.3s ease, transform 0.3s ease;
+  transition:
+    opacity 0.3s ease,
+    transform 0.3s ease;
 }
 </style>
