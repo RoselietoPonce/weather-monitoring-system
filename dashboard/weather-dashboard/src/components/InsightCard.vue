@@ -16,7 +16,7 @@
       <Icon icon="ph:warning-circle-bold" class="h-10 w-10" />
       <div>
         <h3 class="text-lg font-bold text-text-main">Error</h3>
-        <p class="text-text-light">{{ error || "Something went wrong." }}</p>
+        <p class="text-text-light">{{ error || 'Something went wrong.' }}</p>
       </div>
     </div>
 
@@ -65,134 +65,124 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, onUnmounted } from "vue";
-import { rtdb } from "@/firebase.js";
-import { ref as dbRef, onValue } from "firebase/database";
-import { Icon } from "@iconify/vue";
+import { ref, onMounted, computed, onUnmounted } from 'vue'
+import { rtdb } from '@/firebase.js'
+import { ref as dbRef, onValue } from 'firebase/database'
+import { Icon } from '@iconify/vue'
 
 // Constants
 const LIKELIHOOD = {
-  VERY_HIGH: "very_high",
-  HIGH: "high",
-  MODERATE: "moderate",
-  LOW: "low",
-  VERY_LOW: "very_low",
-  DEFAULT: "default"
-};
+  VERY_HIGH: 'very_high',
+  HIGH: 'high',
+  MODERATE: 'moderate',
+  LOW: 'low',
+  VERY_LOW: 'very_low',
+  DEFAULT: 'default',
+}
 
 const ICONS = {
-  [LIKELIHOOD.VERY_HIGH]: "ph:cloud-lightning-bold",
-  [LIKELIHOOD.HIGH]: "ph:cloud-rain-bold",
-  [LIKELIHOOD.MODERATE]: "ph:cloud-bold",
-  [LIKELIHOOD.LOW]: "ph:sun-dim-bold",
-  [LIKELIHOOD.VERY_LOW]: "ph:sun-bold",
-  [LIKELIHOOD.DEFAULT]: "ph:question-bold"
-};
+  [LIKELIHOOD.VERY_HIGH]: 'ph:cloud-lightning-bold',
+  [LIKELIHOOD.HIGH]: 'ph:cloud-rain-bold',
+  [LIKELIHOOD.MODERATE]: 'ph:cloud-bold',
+  [LIKELIHOOD.LOW]: 'ph:sun-dim-bold',
+  [LIKELIHOOD.VERY_LOW]: 'ph:sun-bold',
+  [LIKELIHOOD.DEFAULT]: 'ph:question-bold',
+}
 
 const COLORS = {
-  [LIKELIHOOD.VERY_HIGH]: "text-purple-500",
-  [LIKELIHOOD.HIGH]: "text-blue-500",
-  [LIKELIHOOD.MODERATE]: "text-yellow-500",
-  [LIKELIHOOD.LOW]: "text-orange-500",
-  [LIKELIHOOD.VERY_LOW]: "text-red-500",
-  [LIKELIHOOD.DEFAULT]: "text-gray-400"
-};
+  [LIKELIHOOD.VERY_HIGH]: 'text-purple-500',
+  [LIKELIHOOD.HIGH]: 'text-blue-500',
+  [LIKELIHOOD.MODERATE]: 'text-yellow-500',
+  [LIKELIHOOD.LOW]: 'text-orange-500',
+  [LIKELIHOOD.VERY_LOW]: 'text-red-500',
+  [LIKELIHOOD.DEFAULT]: 'text-gray-400',
+}
 
 // State
-const insight = ref(null);
-const isLoading = ref(true);
-const error = ref(null);
+const insight = ref(null)
+const isLoading = ref(true)
+const error = ref(null)
 
 // Helper Functions
 const getConfidenceLabel = (confidence) => {
-  if (confidence >= 0.9) return "Very High Confidence";
-  if (confidence >= 0.7) return "High Confidence";
-  if (confidence >= 0.5) return "Moderate Confidence";
-  if (confidence >= 0.3) return "Low Confidence";
-  return "Very Low Confidence";
-};
+  if (confidence >= 0.9) return 'Very High Confidence'
+  if (confidence >= 0.7) return 'High Confidence'
+  if (confidence >= 0.5) return 'Moderate Confidence'
+  if (confidence >= 0.3) return 'Low Confidence'
+  return 'Very Low Confidence'
+}
 
 const processInsightData = (data) => {
   // Normalize likelihood (handle uppercase, camelCase, etc.)
-  const likelihood =
-    data.likelihood?.toString().toLowerCase() || LIKELIHOOD.DEFAULT;
-  const validLikelihoods = Object.values(LIKELIHOOD);
+  const likelihood = data.likelihood?.toString().toLowerCase() || LIKELIHOOD.DEFAULT
+  const validLikelihoods = Object.values(LIKELIHOOD)
 
   return {
-    likelihood: validLikelihoods.includes(likelihood)
-      ? likelihood
-      : LIKELIHOOD.DEFAULT,
-    message: data.message || "No prediction available",
+    likelihood: validLikelihoods.includes(likelihood) ? likelihood : LIKELIHOOD.DEFAULT,
+    message: data.message || 'No prediction available',
     confidence:
-      typeof data.confidence === "number" &&
-      data.confidence >= 0 &&
-      data.confidence <= 1
+      typeof data.confidence === 'number' && data.confidence >= 0 && data.confidence <= 1
         ? data.confidence
         : null,
     details: data.details || null,
-    updatedAt:
-      typeof data.updatedAt === "number" ? data.updatedAt : Date.now()
-  };
-};
+    updatedAt: typeof data.updatedAt === 'number' ? data.updatedAt : Date.now(),
+  }
+}
 
 // Computed Properties
 const formattedTimestamp = computed(() => {
-  if (!insight.value?.updatedAt) return "";
+  if (!insight.value?.updatedAt) return ''
 
-  const now = Date.now();
-  const diffSeconds = Math.round((now - insight.value.updatedAt) / 1000);
+  const now = Date.now()
+  const diffSeconds = Math.round((now - insight.value.updatedAt) / 1000)
 
-  if (diffSeconds < 2) return "just now";
-  if (diffSeconds < 60) return `${diffSeconds}s ago`;
-  if (diffSeconds < 3600) return `${Math.floor(diffSeconds / 60)}m ago`;
-  if (diffSeconds < 86400) return `${Math.floor(diffSeconds / 3600)}h ago`;
+  if (diffSeconds < 2) return 'just now'
+  if (diffSeconds < 60) return `${diffSeconds}s ago`
+  if (diffSeconds < 3600) return `${Math.floor(diffSeconds / 60)}m ago`
+  if (diffSeconds < 86400) return `${Math.floor(diffSeconds / 3600)}h ago`
 
-  return new Date(insight.value.updatedAt).toLocaleDateString();
-});
+  return new Date(insight.value.updatedAt).toLocaleDateString()
+})
 
-const insightIcon = computed(
-  () => ICONS[insight.value?.likelihood] || ICONS[LIKELIHOOD.DEFAULT]
-);
+const insightIcon = computed(() => ICONS[insight.value?.likelihood] || ICONS[LIKELIHOOD.DEFAULT])
 
-const insightColor = computed(
-  () => COLORS[insight.value?.likelihood] || COLORS[LIKELIHOOD.DEFAULT]
-);
+const insightColor = computed(() => COLORS[insight.value?.likelihood] || COLORS[LIKELIHOOD.DEFAULT])
 
 // Firebase Integration
-let unsubscribe = () => {};
+let unsubscribe = () => {}
 
 onMounted(() => {
-  const insightRef = dbRef(rtdb, "insights/daily_prediction");
+  const insightRef = dbRef(rtdb, 'insights/daily_prediction')
 
   unsubscribe = onValue(
     insightRef,
     (snapshot) => {
       try {
         if (snapshot.exists()) {
-          const rawData = snapshot.val();
-          insight.value = processInsightData(rawData);
-          error.value = null;
+          const rawData = snapshot.val()
+          insight.value = processInsightData(rawData)
+          error.value = null
         } else {
-          insight.value = null;
+          insight.value = null
         }
       } catch (err) {
-        console.error("Error processing insight data:", err);
-        error.value = "Invalid prediction data received.";
-        insight.value = null;
+        console.error('Error processing insight data:', err)
+        error.value = 'Invalid prediction data received.'
+        insight.value = null
       } finally {
-        isLoading.value = false;
+        isLoading.value = false
       }
     },
     (err) => {
-      console.error("Error fetching insight:", err);
-      error.value = "Failed to load prediction data.";
-      insight.value = null;
-      isLoading.value = false;
-    }
-  );
-});
+      console.error('Error fetching insight:', err)
+      error.value = 'Failed to load prediction data.'
+      insight.value = null
+      isLoading.value = false
+    },
+  )
+})
 
 onUnmounted(() => {
-  unsubscribe();
-});
+  unsubscribe()
+})
 </script>

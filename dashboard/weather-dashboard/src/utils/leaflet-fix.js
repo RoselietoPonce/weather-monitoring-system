@@ -14,8 +14,11 @@ delete L.Icon.Default.prototype._getIconUrl
 //    We use `import.meta.url` to create URLs relative to the current module,
 //    ensuring they resolve correctly regardless of the application's structure.
 L.Icon.Default.mergeOptions({
-  iconRetinaUrl: new URL('../../node_modules/leaflet/dist/images/marker-icon-2x.png', import.meta.url)
-    .href,
+  iconRetinaUrl: new URL(
+    '../../node_modules/leaflet/dist/images/marker-icon-2x.png',
+    import.meta.url,
+  ).href,
   iconUrl: new URL('../../node_modules/leaflet/dist/images/marker-icon.png', import.meta.url).href,
-  shadowUrl: new URL('../../node_modules/leaflet/dist/images/marker-shadow.png', import.meta.url).href,
+  shadowUrl: new URL('../../node_modules/leaflet/dist/images/marker-shadow.png', import.meta.url)
+    .href,
 })

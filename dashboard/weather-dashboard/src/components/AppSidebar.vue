@@ -1,120 +1,155 @@
 <template>
-  <aside
-    class="flex flex-col bg-[var(--color-surface)] text-[var(--color-text-main)] h-screen border-r border-[var(--color-hover)] transition-all duration-500 ease-in-out"
-    :class="isExpanded ? 'w-64' : 'w-20'"
+  <!-- Mobile backdrop -->
+  <transition
+    enter-active-class="transition-opacity duration-300"
+    enter-from-class="opacity-0"
+    leave-active-class="transition-opacity duration-300"
+    leave-to-class="opacity-0"
   >
-    <!-- Main Navigation with Toggle -->
-    <nav class="flex-1 px-4 space-y-2 mt-4" role="navigation">
-      <!-- Hamburger Toggle -->
+    <div
+      v-if="isMobileOpen"
+      class="fixed inset-0 bg-black/50 z-30 lg:hidden"
+      @click="isMobileOpen = false"
+    ></div>
+  </transition>
+
+  <!-- Sidebar -->
+  <aside
+    @click.stop
+    class="fixed lg:static top-0 left-0 z-40 h-screen bg-surface text-text-main border-r border-hover flex flex-col transition-[width,transform] duration-300 ease-in-out"
+    :class="{
+      'w-64': isExpanded,
+      'w-20': !isExpanded,
+      'translate-x-0': isMobileOpen,
+      '-translate-x-full lg:translate-x-0': !isMobileOpen,
+    }"
+  >
+    <nav class="flex-1 px-4 space-y-2 mt-4 overflow-y-auto no-scrollbar" role="navigation">
+
+      <!-- Desktop expand button -->
       <button
-        @click="isExpanded = !isExpanded"
-        class="flex items-center w-full p-3 mb-4 rounded-xl bg-[var(--color-surface)] shadow-sm hover:bg-[var(--color-primary)]/5 transition-all duration-300 ease-in-out focus:outline-none focus:ring-0"
+        @click="toggleExpand"
+        class="hidden lg:flex items-center w-full p-3 mb-4 rounded-xl bg-surface shadow-sm hover:bg-primary/5 transition-all duration-300"
         :class="{ 'justify-center': !isExpanded }"
-        :title="isExpanded ? 'Collapse Sidebar' : 'Expand Sidebar'"
-        aria-label="Toggle Sidebar"
       >
         <Icon
-          :icon="isExpanded ? 'ph:x-bold' : 'ph:list-bold'"
-          class="h-5 w-5 text-[var(--color-text-light)] transition-all duration-300 ease-in-out"
+          :icon="isExpanded ? 'ph:caret-left-bold' : 'ph:list-bold'"
+          class="h-5 w-5 text-text-light"
         />
         <span v-if="isExpanded" class="ml-4 font-medium">Menu</span>
       </button>
 
-      <!-- Navigation Items -->
+      <!-- Mobile close -->
+      <div class="flex lg:hidden justify-end p-2 mb-2">
+        <button @click="isMobileOpen = false" class="p-2 text-text-light hover:text-primary">
+          <Icon icon="ph:x-bold" class="h-6 w-6" />
+        </button>
+      </div>
+
+      <!-- Navigation items -->
       <router-link
         v-for="item in navItems"
         :key="item.routeName"
         :to="{ name: item.routeName }"
         custom
-        v-slot="{ href, navigate, isActive, isExactActive }"
+        v-slot="{ href, navigate, isActive }"
       >
         <a
           :href="href"
           @click="navigate"
-          class="relative flex items-center p-3 rounded-xl group transition-all duration-300 ease-in-out focus:outline-none focus:ring-0"
+          class="relative flex items-center p-3 rounded-xl group transition-all duration-300"
           :class="[
             isExpanded ? '' : 'justify-center',
-            (item.routeName === 'dashboard' ? isExactActive : isActive)
-              ? 'bg-[var(--color-primary)]/10 text-[var(--color-primary)] font-medium'
-              : 'text-[var(--color-text-light)] opacity-80 hover:bg-[var(--color-primary)]/5 hover:text-[var(--color-primary)]',
+            isActive
+              ? 'bg-primary/10 text-primary font-medium'
+              : 'text-text-light opacity-80 hover:bg-primary/5 hover:text-primary'
           ]"
-          :aria-label="item.name"
         >
-          <Icon
-            :icon="item.icon"
-            class="h-6 w-6 flex-shrink-0 transition-all duration-300 ease-in-out"
-          />
-          <span v-if="isExpanded" class="ml-4 font-medium sidebar-label">{{ item.name }}</span>
+          <Icon :icon="item.icon" class="h-6 w-6 flex-shrink-0" />
 
-          <!-- Tooltip when collapsed -->
-          <span
-            v-if="!isExpanded"
-            class="absolute left-full ml-4 px-2 py-1 text-sm font-medium text-white bg-gray-900 rounded-md opacity-0 group-hover:opacity-100 whitespace-nowrap transition-all duration-300 ease-in-out"
-          >
+          <!-- Label when expanded -->
+          <span v-if="isExpanded" class="ml-4 font-medium whitespace-nowrap">
             {{ item.name }}
           </span>
+
+          <!-- Tooltip (desktop only) -->
+          <div
+            v-if="!isExpanded"
+            class="absolute left-14 z-50 px-2 py-1 text-sm text-white bg-gray-900 rounded-md
+                   opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none hidden lg:block"
+          >
+            {{ item.name }}
+          </div>
         </a>
       </router-link>
     </nav>
 
-    <!-- Footer Navigation -->
-    <div
-      class="px-4 py-4 space-y-2 border-t border-[var(--color-hover)] transition-all duration-500 ease-in-out"
-    >
+    <!-- PROFILE + LOGOUT -->
+    <div class="px-4 py-4 space-y-2 border-t border-hover">
+
       <!-- Profile -->
       <router-link to="/profile" custom v-slot="{ href, navigate, isActive }">
         <a
           :href="href"
           @click="navigate"
-          class="relative flex items-center p-3 rounded-xl group transition-all duration-300 ease-in-out focus:outline-none focus:ring-0"
+          class="relative flex items-center p-3 rounded-xl group transition-all duration-300"
           :class="[
             isExpanded ? '' : 'justify-center',
             isActive
-              ? 'bg-[var(--color-primary)]/10 text-[var(--color-primary)] font-medium'
-              : 'text-[var(--color-text-light)] opacity-80 hover:bg-[var(--color-primary)]/5 hover:text-[var(--color-primary)]',
+              ? 'bg-primary/10 text-primary font-medium'
+              : 'text-text-light opacity-80 hover:bg-primary/5 hover:text-primary'
           ]"
-          aria-label="Profile"
         >
-          <Icon icon="ph:user-circle-bold" class="h-6 w-6 flex-shrink-0" />
-          <span v-if="isExpanded" class="ml-4 font-medium">Profile</span>
-          <span
+          <Icon icon="ph:user-circle-bold" class="h-6 w-6" />
+
+          <span v-if="isExpanded" class="ml-4 font-medium whitespace-nowrap">Profile</span>
+
+          <div
             v-if="!isExpanded"
-            class="absolute left-full ml-4 px-2 py-1 text-sm font-medium text-white bg-gray-900 rounded-md opacity-0 group-hover:opacity-100 transition-all duration-300 ease-in-out"
+            class="absolute left-14 z-50 px-2 py-1 text-sm text-white bg-gray-900 rounded-md
+                   opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none hidden lg:block"
           >
             Profile
-          </span>
+          </div>
         </a>
       </router-link>
 
       <!-- Logout -->
       <button
         @click="handleLogout"
-        class="relative flex w-full items-center p-3 rounded-xl group text-[var(--color-text-light)] opacity-80 hover:bg-[var(--color-primary)]/5 hover:text-[var(--color-primary)] transition-all duration-300 ease-in-out focus:outline-none focus:ring-0"
+        class="relative flex w-full items-center p-3 rounded-xl group text-text-light opacity-80 hover:bg-primary/5 hover:text-red-500 transition-all duration-300"
         :class="{ 'justify-center': !isExpanded }"
-        aria-label="Logout"
       >
-        <Icon icon="ph:sign-out-bold" class="h-6 w-6 flex-shrink-0" />
-        <span v-if="isExpanded" class="ml-4 font-medium">Logout</span>
-        <span
+        <Icon icon="ph:sign-out-bold" class="h-6 w-6" />
+        <span v-if="isExpanded" class="ml-4 font-medium whitespace-nowrap">Logout</span>
+
+        <div
           v-if="!isExpanded"
-          class="absolute left-full ml-4 px-2 py-1 text-sm font-medium text-white bg-gray-900 rounded-md opacity-0 group-hover:opacity-100 transition-all duration-300 ease-in-out"
+          class="absolute left-14 z-50 px-2 py-1 text-sm text-white bg-gray-900 rounded-md
+                 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none hidden lg:block"
         >
           Logout
-        </span>
+        </div>
       </button>
+
     </div>
   </aside>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { Icon } from '@iconify/vue'
-import { auth } from '@/firebase.js'
+import { auth } from '@/firebase'
 import { signOut } from 'firebase/auth'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 
-const isExpanded = ref(false)
+const isExpanded = ref(true)
+const isMobileOpen = ref(false)
+
 const router = useRouter()
+const route = useRoute()
+
+const emit = defineEmits(['update:expanded'])
 
 const navItems = [
   { name: 'Dashboard', routeName: 'dashboard', icon: 'ph:layout-bold' },
@@ -132,12 +167,35 @@ const handleLogout = async () => {
     console.error('Logout failed:', error)
   }
 }
+
+const toggleExpand = () => {
+  isExpanded.value = !isExpanded.value
+  emit('update:expanded', isExpanded.value)
+}
+
+const toggleMobile = () => {
+  isMobileOpen.value = !isMobileOpen.value
+}
+
+defineExpose({ toggleMobile, isMobileOpen })
+
+watch(route, () => {
+  isMobileOpen.value = false
+})
 </script>
 
 <style scoped>
+/* Sidebar label fade */
 .sidebar-label {
-  transition:
-    opacity 0.3s ease,
-    transform 0.3s ease;
+  transition: opacity 0.2s ease;
+}
+
+/* Hide scrollbar */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 </style>
